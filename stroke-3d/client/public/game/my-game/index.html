@@ -946,14 +946,14 @@ const FACE_CHECKS = {
   smile:     r => r.smile_ratio > 5.0,
   open:      r => r.open_ratio  >  0.3,
   brow:      r => r.brow_ratio  >  0.34,
-  purse:     r => r.purse_ratio >  0.4 && r.smile_ratio < 2.0 && r.open_ratio < 0.030
+  purse:     r => r.purse_ratio >  0.4 && r.smile_ratio > 2.0 && r.open_ratio < 0.1
 }
 
 const FACE_DEBUG = {
   smile:     { label:"smile_ratio", threshold:"> 5.0"            },
   open:      { label:"open_ratio",  threshold:"> 0.3"            },
   brow:      { label:"brow_ratio",  threshold:"> 0.34"           },
-  purse:     { label:"purse_ratio", threshold:">0.4 & smile<2.0" }
+  purse:     { label:"purse_ratio", threshold:">0.4 & smile>2.0" }
 }
 
 // ═══════════════════════════════════════════════════════
