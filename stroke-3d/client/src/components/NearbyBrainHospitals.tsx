@@ -20,6 +20,37 @@ declare global {
   }
 }
 
+const OVERPASS_ENDPOINTS = [
+  "https://overpass-api.de/api/interpreter",
+  "https://overpass.kumi.systems/api/interpreter",
+  "https://overpass.openstreetmap.ru/api/interpreter",
+];
+
+const LEAFLET_SOURCES = [
+  {
+    css: "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css",
+    js: "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js",
+  },
+  {
+    css: "https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css",
+    js: "https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js",
+  },
+];
+
+const REQUEST_TIMEOUT_MS = 8500;
+const LEAFLET_TIMEOUT_MS = 10000;
+
+const FALLBACK_HOSPITALS = [
+  { id: -1, name: "King Chulalongkorn Memorial Hospital", lat: 13.7326, lng: 100.5351, phone: "02-256-4000", typeLabel: "Public", typeColor: "#4d9fff" },
+  { id: -2, name: "Siriraj Hospital", lat: 13.7584, lng: 100.4851, phone: "02-419-7000", typeLabel: "Public", typeColor: "#4d9fff" },
+  { id: -3, name: "Ramathibodi Hospital", lat: 13.7663, lng: 100.5262, phone: "02-201-1000", typeLabel: "Public", typeColor: "#4d9fff" },
+  { id: -4, name: "Prasat Neurological Institute", lat: 13.7658, lng: 100.5367, phone: "02-306-9899", typeLabel: "Public", typeColor: "#4d9fff" },
+  { id: -5, name: "Rajavithi Hospital", lat: 13.7652, lng: 100.5344, phone: "02-206-2900", typeLabel: "Public", typeColor: "#4d9fff" },
+  { id: -6, name: "Bangkok Hospital", lat: 13.7487, lng: 100.5837, phone: "1719", typeLabel: "Private", typeColor: "#ffc94d" },
+  { id: -7, name: "Vibhavadi Hospital", lat: 13.8462, lng: 100.5625, phone: "02-561-1111", typeLabel: "Private", typeColor: "#ffc94d" },
+  { id: -8, name: "Bumrungrad International Hospital", lat: 13.7469, lng: 100.5526, phone: "02-066-8888", typeLabel: "Private", typeColor: "#ffc94d" },
+];
+
 function calcDist(la1: number, ln1: number, la2: number, ln2: number) {
   const R = 6371;
   const dLa = ((la2 - la1) * Math.PI) / 180;
@@ -53,25 +84,107 @@ function resolvePhone(tags: Record<string, string>) {
 }
 
 let leafletReady = false;
+let leafletPromise: Promise<void> | null = null;
 function loadLeaflet(): Promise<void> {
-  return new Promise((ok) => {
+  if (leafletReady && window.L) return Promise.resolve();
+  if (leafletPromise) return leafletPromise;
+
+  leafletPromise = new Promise((ok, fail) => {
     if (leafletReady && window.L) { ok(); return; }
-    if (!document.getElementById("lf-css")) {
-      const link = document.createElement("link");
-      link.id = "lf-css"; link.rel = "stylesheet";
-      link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
-      document.head.appendChild(link);
-    }
+    const startedAt = Date.now();
+    let sourceIndex = 0;
+
+    const trySource = () => {
+      const source = LEAFLET_SOURCES[sourceIndex];
+      if (!source) {
+        leafletPromise = null;
+        fail(new Error("Leaflet could not be loaded"));
+        return;
+      }
+
+      const oldScript = document.getElementById("lf-js");
+      if (oldScript) oldScript.remove();
+
+      let link = document.getElementById("lf-css") as HTMLLinkElement | null;
+      if (!link) {
+        link = document.createElement("link");
+        link.id = "lf-css";
+        link.rel = "stylesheet";
+        document.head.appendChild(link);
+      }
+      link.href = source.css;
+
+      const script = document.createElement("script");
+      const timeout = window.setTimeout(() => {
+        sourceIndex += 1;
+        script.remove();
+        trySource();
+      }, Math.max(1500, LEAFLET_TIMEOUT_MS - (Date.now() - startedAt)));
+
+      script.id = "lf-js";
+      script.src = source.js;
+      script.onload = () => {
+        window.clearTimeout(timeout);
+        leafletReady = true;
+        ok();
+      };
+      script.onerror = () => {
+        window.clearTimeout(timeout);
+        sourceIndex += 1;
+        script.remove();
+        trySource();
+      };
+      document.head.appendChild(script);
+    };
+
     if (document.getElementById("lf-js")) {
-      const poll = setInterval(() => { if (window.L) { clearInterval(poll); leafletReady = true; ok(); } }, 80);
+      const poll = window.setInterval(() => {
+        if (window.L) {
+          window.clearInterval(poll);
+          leafletReady = true;
+          ok();
+        } else if (Date.now() - startedAt > LEAFLET_TIMEOUT_MS) {
+          window.clearInterval(poll);
+          trySource();
+        }
+      }, 80);
       return;
     }
-    const script = document.createElement("script");
-    script.id = "lf-js";
-    script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
-    script.onload = () => { leafletReady = true; ok(); };
-    document.head.appendChild(script);
+
+    trySource();
   });
+  return leafletPromise;
+}
+
+function fetchWithTimeout(url: string, body: string, timeoutMs: number) {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
+
+  return fetch(url, { method: "POST", body, signal: controller.signal })
+    .finally(() => window.clearTimeout(timeout));
+}
+
+async function fetchFirstOk(query: string) {
+  return Promise.any(
+    OVERPASS_ENDPOINTS.map((url) =>
+      fetchWithTimeout(url, query, REQUEST_TIMEOUT_MS).then((res) => {
+        if (!res.ok) throw new Error(`Overpass HTTP ${res.status}`);
+        return res;
+      }),
+    ),
+  );
+}
+
+function fallbackHospitals(lat: number, lng: number): RealHospital[] {
+  return FALLBACK_HOSPITALS
+    .map((item) => ({
+      ...item,
+      dist: calcDist(lat, lng, item.lat, item.lng),
+      emergency: true,
+      amenity: "hospital",
+    }))
+    .sort((a, b) => a.dist - b.dist)
+    .slice(0, 8);
 }
 
 async function fetchHospitals(lat: number, lng: number): Promise<RealHospital[]> {
@@ -90,20 +203,14 @@ async function fetchHospitals(lat: number, lng: number): Promise<RealHospital[]>
 );
 out center tags 20;`;
 
-  const doFetch = () => Promise.any([
-    fetch("https://overpass-api.de/api/interpreter", { method: "POST", body: query }),
-    fetch("https://overpass.kumi.systems/api/interpreter", { method: "POST", body: query }),
-  ]);
-
   let res: Response;
   try {
-    res = await doFetch();
+    res = await fetchFirstOk(query);
   } catch {
     await new Promise((r) => setTimeout(r, 500));
-    res = await doFetch();
+    res = await fetchFirstOk(query);
   }
 
-  if (!res.ok) throw new Error(`Overpass HTTP ${res.status}`);
   const json = await res.json();
 
   const list = (json.elements as any[])
@@ -170,6 +277,7 @@ export default function NearbyBrainHospitals({ compact = false }: { compact?: bo
   const [selId, setSelId] = useState<number | null>(null);
   const [errMsg, setErrMsg] = useState("");
   const [gpsAccuracy, setGpsAccuracy] = useState<number | null>(null);
+  const [usingFallback, setUsingFallback] = useState(false);
   const mapDiv = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
   const markers = useRef<{ id: number; m: any }[]>([]);
@@ -178,7 +286,7 @@ export default function NearbyBrainHospitals({ compact = false }: { compact?: bo
 
   // โหลด Leaflet + CSS ล่วงหน้าทันทีที่ mount
   useEffect(() => {
-    loadLeaflet();
+    loadLeaflet().catch(() => undefined);
     injectCSS();
   }, []);
 
@@ -186,6 +294,7 @@ export default function NearbyBrainHospitals({ compact = false }: { compact?: bo
     setPhase("gps");
     setErrMsg("");
     setGpsAccuracy(null);
+    setUsingFallback(false);
 
     let lat: number;
     let lng: number;
@@ -215,21 +324,25 @@ export default function NearbyBrainHospitals({ compact = false }: { compact?: bo
     try {
       list = await fetchHospitals(lat, lng);
     } catch {
-      setErrMsg("โหลดข้อมูลโรงพยาบาลไม่ได้ กรุณาลองใหม่");
-      setPhase("error");
-      return;
+      list = fallbackHospitals(lat, lng);
+      setUsingFallback(true);
     }
 
     if (list.length === 0) {
-      setErrMsg("ไม่พบโรงพยาบาลหรือคลินิกในรัศมี 10 กม. ลองขยับตำแหน่งแล้วรีเฟรช");
-      setPhase("error");
-      return;
+      list = fallbackHospitals(lat, lng);
+      setUsingFallback(true);
     }
 
     setHospitals(list);
     setSelId(list[0].id);
     setPhase("map");
-    await loadLeaflet(); // จะ resolve ทันทีถ้าโหลดไปแล้ว
+    try {
+      await loadLeaflet(); // จะ resolve ทันทีถ้าโหลดไปแล้ว
+    } catch {
+      setErrMsg("Map library could not be loaded. Please check the internet connection and try again.");
+      setPhase("error");
+      return;
+    }
     injectCSS();
     setPhase("done");
   }, []);
@@ -403,7 +516,7 @@ export default function NearbyBrainHospitals({ compact = false }: { compact?: bo
 
         {phase === "done" && (
           <div style={{ position: "absolute", bottom: 14, right: 16, zIndex: 900, fontSize: 15, color: "rgba(110,150,170,0.5)", fontFamily: "monospace", pointerEvents: "none" }}>
-            Powered by Google Maps
+            {usingFallback ? "Backup hospital data" : "Powered by OpenStreetMap"}
           </div>
         )}
       </div>

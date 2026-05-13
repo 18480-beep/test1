@@ -3231,6 +3231,43 @@ body.theme-inferno .megaphone-btn {
             };
         })();
         </script>
+        <script>
+        window.__forceOpenSpeechApp = function() {
+            var loader = document.getElementById('app-loader');
+            if (window._finishLoader) window._finishLoader();
+
+            var screens = document.querySelectorAll ? document.querySelectorAll('.screen') : [];
+            for (var i = 0; i < screens.length; i++) {
+                screens[i].classList.remove('active', 'wipe-out', 'wipe-in');
+            }
+
+            var stats = document.getElementById('stats-bar');
+            var topBtns = document.getElementById('top-btns');
+            var pet = document.getElementById('virtual-pet');
+            var dashboard = document.getElementById('dashboard-screen');
+            if (stats) stats.style.display = 'flex';
+            if (topBtns) topBtns.style.display = 'flex';
+            if (pet) pet.style.display = 'flex';
+            if (dashboard) dashboard.classList.add('active');
+
+            if (loader) {
+                loader.style.opacity = '0';
+                loader.style.pointerEvents = 'none';
+                setTimeout(function() {
+                    if (loader && loader.parentNode) loader.parentNode.removeChild(loader);
+                }, 650);
+            }
+        };
+
+        setTimeout(function() {
+            if (document.getElementById('app-loader')) {
+                if (window.safeInitApp) {
+                    try { window.safeInitApp(); return; } catch (e) {}
+                }
+                window.__forceOpenSpeechApp();
+            }
+        }, 8000);
+        </script>
     </div>
 
     <!-- ================= TOP NAVIGATION ================= -->
@@ -4845,8 +4882,10 @@ function handleLogoTap() {
 }
 
 function showAdminCodeModal() {
-    document.getElementById('admin-code-modal-wrap')?.remove();
-    document.getElementById('admin-code-modal-style')?.remove();
+    const oldAdminWrap = document.getElementById('admin-code-modal-wrap');
+    const oldAdminStyle = document.getElementById('admin-code-modal-style');
+    if (oldAdminWrap) oldAdminWrap.remove();
+    if (oldAdminStyle) oldAdminStyle.remove();
 
     const style = document.createElement('style');
     style.id = 'admin-code-modal-style';
@@ -5379,9 +5418,12 @@ function showAdminCodeModal() {
 }
 
 function closeAdminCodeModal() {
-    document.getElementById('admin-code-modal-wrap')?.remove();
-    document.getElementById('admin-code-modal')?.remove();
-    document.getElementById('admin-code-modal-style')?.remove();
+    const adminWrap = document.getElementById('admin-code-modal-wrap');
+    const adminModal = document.getElementById('admin-code-modal');
+    const adminStyle = document.getElementById('admin-code-modal-style');
+    if (adminWrap) adminWrap.remove();
+    if (adminModal) adminModal.remove();
+    if (adminStyle) adminStyle.remove();
 }
 
 function submitAdminCode() {
@@ -6049,7 +6091,7 @@ function applyBtnSkin() {
     const styleId = 'btn-skin-style';
     let el = document.getElementById(styleId);
     if (!el) { el = document.createElement('style'); el.id = styleId; document.head.appendChild(el); }
-    if (skin?.css) {
+    if (skin && skin.css) {
         el.textContent = `.btn-start { ${skin.css} } .mode-btn-3d { ${skin.css} }`;
     } else {
         el.textContent = '';
@@ -6570,8 +6612,8 @@ if (roundPct >= 100 && !chartRounds.classList.contains('completed')) {
         // ---------------------------------------------------------
         // 📣 ฟังก์ชันอ่านเสียงผ่านปุ่มโทรโข่ง (แก้บั๊ก Chrome บล็อกเสียง)
         // ---------------------------------------------------------
-        function speakCurrentWord() {
-  if (!currentWordObj?.w) return;
+function speakCurrentWord() {
+  if (!currentWordObj || !currentWordObj.w) return;
 
   window.speechSynthesis.cancel();
 
@@ -6583,17 +6625,18 @@ if (roundPct >= 100 && !chartRounds.classList.contains('completed')) {
 
   const speak = () => {
     let utter = new SpeechSynthesisUtterance(currentWordObj.w);
-    utter.lang = document.getElementById('lang-select')?.value || 'th-TH';
+    const langSelectForSpeak = document.getElementById('lang-select');
+    utter.lang = (langSelectForSpeak && langSelectForSpeak.value) || 'th-TH';
     utter.rate = 0.7;
     utter.pitch = 1.0;
     utter.volume = 1.0; // บังคับ max ก่อน ไม่ขึ้นกับ volTts
 
     let btn = document.getElementById('btn-megaphone');
-    utter.onstart = () => btn?.classList.add('speaking-active');
-    utter.onend = () => btn?.classList.remove('speaking-active');
+    utter.onstart = () => { if (btn) btn.classList.add('speaking-active'); };
+    utter.onend = () => { if (btn) btn.classList.remove('speaking-active'); };
     utter.onerror = (e) => {
       console.error('TTS error:', e);
-      btn?.classList.remove('speaking-active');
+      if (btn) btn.classList.remove('speaking-active');
     };
 
     window.speechSynthesis.speak(utter);
@@ -7467,7 +7510,7 @@ function generateAISummary(avgAcc, total, correct) {
     .slice(0, 3)
     .map(([char, count]) => {
       const db = (THAI_PHONETIC_THERAPY_DB || []).find(p => p.char === char);
-      return { char, count, advice: db?.advice || '' };
+      return { char, count, advice: (db && db.advice) || '' };
     });
 
   // ---- สร้าง HTML ----
@@ -9509,9 +9552,12 @@ function initModeCards() {
         <option value="hard">ยาก</option>`;
 
     // กด default
-    document.querySelector('#card-mode [data-val="general"]')?.click();
-    document.querySelector('#card-lang [data-val="th-TH"]')?.click();
-    document.querySelector('#card-diff [data-val="easy"]')?.click();
+    const defaultModeCard = document.querySelector('#card-mode [data-val="general"]');
+    const defaultLangCard = document.querySelector('#card-lang [data-val="th-TH"]');
+    const defaultDiffCard = document.querySelector('#card-diff [data-val="easy"]');
+    if (defaultModeCard) defaultModeCard.click();
+    if (defaultLangCard) defaultLangCard.click();
+    if (defaultDiffCard) defaultDiffCard.click();
 }
 
 // ============================================================
@@ -9846,8 +9892,10 @@ function adminSaveChapter() {
   if (!num || !name) { showToast('กรอกข้อมูลให้ครบ', 'warning'); return; }
   
   const db = getAdminDB();
-  const color = document.getElementById('admin-ch-color')?.value || '#22c55e';
-const bgData = document.getElementById('admin-ch-bg-data')?.value || '';
+  const adminChColorEl = document.getElementById('admin-ch-color');
+  const adminChBgEl = document.getElementById('admin-ch-bg-data');
+  const color = (adminChColorEl && adminChColorEl.value) || '#22c55e';
+const bgData = (adminChBgEl && adminChBgEl.value) || '';
 
 // เช็คว่ามี chapter นี้อยู่แล้วหรือเปล่า (update แทน push)
 const existingIdx = db.chapters.findIndex(c => c.id === parseInt(num));
@@ -9933,19 +9981,26 @@ function adminNewQuestion() {
 
 function adminSaveQuestion() {
   const db = getAdminDB();                                              // ← บรรทัดแรกสุด
-  const stageId   = document.getElementById('admin-q-stage')?.value;
-  const th        = document.getElementById('admin-q-th')?.value.trim();
-  const en        = document.getElementById('admin-q-en')?.value.trim() || '';
-  const level     = document.getElementById('admin-q-level')?.value || 'medium';
-  const isRoleplayQ = document.getElementById('is-roleplay-q')?.checked;
+  const adminQStageEl = document.getElementById('admin-q-stage');
+  const adminQThEl = document.getElementById('admin-q-th');
+  const adminQEnEl = document.getElementById('admin-q-en');
+  const adminQLevelEl = document.getElementById('admin-q-level');
+  const roleplayQEl = document.getElementById('is-roleplay-q');
+  const stageId   = adminQStageEl && adminQStageEl.value;
+  const th        = adminQThEl && adminQThEl.value.trim();
+  const en        = (adminQEnEl && adminQEnEl.value.trim()) || '';
+  const level     = (adminQLevelEl && adminQLevelEl.value) || 'medium';
+  const isRoleplayQ = roleplayQEl && roleplayQEl.checked;
 
   if (!stageId) { showToast('กรุณาเลือกด่านก่อนครับ', 'warning'); return; }  // ← validate stageId ก่อน
 
   if (isRoleplayQ) {
     const pairs = [];
     for (let i = 1; i <= roleplayPairCount; i++) {
-      const npc    = document.getElementById(`rp-npc-${i}`)?.value.trim();
-      const player = document.getElementById(`rp-player-${i}`)?.value.trim();
+      const npcEl = document.getElementById(`rp-npc-${i}`);
+      const playerEl = document.getElementById(`rp-player-${i}`);
+      const npc    = npcEl && npcEl.value.trim();
+      const player = playerEl && playerEl.value.trim();
       if (npc && player) pairs.push({ npc, player });
     }
     if (pairs.length === 0) { showToast('กรุณาเพิ่มบทสนทนาอย่างน้อย 1 คู่', 'warning'); return; }
@@ -10190,17 +10245,22 @@ function ecClearBg() {
 }
 
 function adminSaveEditChapter(id) {
-  const name  = document.getElementById('ec-name')?.value.trim();
-  const desc  = document.getElementById('ec-desc')?.value.trim();
-  const color = document.getElementById('ec-color')?.value.trim();
-  const bg    = document.getElementById('ec-bg-data')?.value || '';
+  const ecNameEl = document.getElementById('ec-name');
+  const ecDescEl = document.getElementById('ec-desc');
+  const ecColorEl = document.getElementById('ec-color');
+  const ecBgEl = document.getElementById('ec-bg-data');
+  const name  = ecNameEl && ecNameEl.value.trim();
+  const desc  = ecDescEl && ecDescEl.value.trim();
+  const color = ecColorEl && ecColorEl.value.trim();
+  const bg    = (ecBgEl && ecBgEl.value) || '';
   if (!name) { showToast('กรอกชื่อ Chapter ด้วย', 'warning'); return; }
   const db = getAdminDB();
   const ch = db.chapters.find(c => c.id === id);
   if (!ch) return;
   ch.name = name; ch.desc = desc; ch.color = color; ch.bg = bg || null;
   saveAdminDB(db);
-  document.getElementById('edit-chapter-modal')?.remove();
+  const editChapterModal = document.getElementById('edit-chapter-modal');
+  if (editChapterModal) editChapterModal.remove();
   renderAdminData();
   showToast('✅ แก้ไข Chapter แล้ว', 'success');
 }
@@ -10271,17 +10331,22 @@ function adminEditStage(stageId) {
 }
 
 function adminSaveEditStage(stageId) {
-  const name = document.getElementById('es-name')?.value.trim();
-  const diff = document.getElementById('es-diff')?.value;
-  const mode = document.getElementById('es-mode')?.value;
-  const lang = document.getElementById('es-lang')?.value;
+  const esNameEl = document.getElementById('es-name');
+  const esDiffEl = document.getElementById('es-diff');
+  const esModeEl = document.getElementById('es-mode');
+  const esLangEl = document.getElementById('es-lang');
+  const name = esNameEl && esNameEl.value.trim();
+  const diff = esDiffEl && esDiffEl.value;
+  const mode = esModeEl && esModeEl.value;
+  const lang = esLangEl && esLangEl.value;
   if (!name) { showToast('กรอกชื่อด่านด้วย', 'warning'); return; }
   const db = getAdminDB();
   const s = db.stages.find(x => x.id === stageId);
   if (!s) return;
   s.name = name; s.diff = diff; s.mode = mode; s.lang = lang;
   saveAdminDB(db);
-  document.getElementById('edit-stage-modal')?.remove();
+  const editStageModal = document.getElementById('edit-stage-modal');
+  if (editStageModal) editStageModal.remove();
   renderAdminData();
   showToast('✅ แก้ไขด่านแล้ว', 'success');
 }
@@ -10351,9 +10416,10 @@ const STAGE_ICONS = {
 
 function getStageStatus(stageId) {
   const prog = JSON.parse(localStorage.getItem('stage_progress') || '{}');
+  const stageProg = prog[stageId] || {};
   return {
-    cleared: prog[stageId]?.cleared || false,
-    stars:   prog[stageId]?.stars   || 0
+    cleared: stageProg.cleared || false,
+    stars:   stageProg.stars   || 0
   };
 }
 
@@ -10552,7 +10618,7 @@ function selectChapter(idx) {
       stages: adminDB.stages.filter(s => s.chapter === ch.id).map(s => ({id:s.id}))
     }));
     if (!isChapterUnlocked(idx, chaptersWithStages)) {
-      showChapterLockedToast(rawChapters[idx]?.name || 'Chapter นี้', idx);
+      showChapterLockedToast((rawChapters[idx] && rawChapters[idx].name) || 'Chapter นี้', idx);
       return;
     }
 
@@ -11242,7 +11308,7 @@ function open2DStagePopup(stageId, chapter) {
     </div>
 
     <div style="color:rgba(180,160,255,0.65); font-size:0.88rem; margin-bottom:16px; letter-spacing:0.5px; position:relative; z-index:2;">
-      ${stageData?.name || ''}
+      ${stageData.name || ''}
     </div>
 
     <div class="cyber-star-row" style="display:flex; justify-content:center; gap:5px; margin-bottom:18px; font-size:1.6rem; position:relative; z-index:2;
@@ -11257,8 +11323,8 @@ function open2DStagePopup(stageId, chapter) {
       margin-bottom:20px; font-size:0.83rem;
       color:rgba(200,180,255,0.55); letter-spacing:0.5px; position:relative; z-index:2;">
       <span style="color:#00c6ff; font-weight:700; font-size:1rem;">${questions.length}</span> โจทย์
-      &nbsp;·&nbsp; <span style="color:#a78bfa;">${stageData?.diff||'easy'}</span>
-      &nbsp;·&nbsp; <span style="color:#e040fb;">${stageData?.mode||'general'}</span>
+      &nbsp;·&nbsp; <span style="color:#a78bfa;">${stageData.diff||'easy'}</span>
+      &nbsp;·&nbsp; <span style="color:#e040fb;">${stageData.mode||'general'}</span>
     </div>
 
     <button class="cyber-btn-start2" onclick="startStage2D('${stageId}')">
@@ -11277,12 +11343,12 @@ function startStage2D(stageId) {
   if (existing) existing.remove();
 
   const adminDB = getAdminDB();
-  const stageData = adminDB.stages.find(s => s.id === stageId);
+  const stageData = adminDB.stages.find(s => s.id === stageId) || {};
   const questions = adminDB.questions.filter(q => q.stageId === stageId);
 
   if (questions.length === 0) {
       // fallback ใช้โจทย์ built-in ตาม difficulty
-      const diff = stageData?.diff || 'easy';
+      const diff = stageData.diff || 'easy';
       const pool = thaiRealSentences[diff] || thaiRealSentences.easy;
       pool.forEach((sentence, i) => {
           questions.push({ id: i, stageId, th: sentence, en: '', level: diff });
@@ -11294,14 +11360,14 @@ function startStage2D(stageId) {
 
   // เซ็ตค่า select
   document.getElementById('diff-select').innerHTML =
-    `<option value="${stageData?.diff||'easy'}">${stageData?.diff||'easy'}</option>`;
+    `<option value="${stageData.diff||'easy'}">${stageData.diff||'easy'}</option>`;
   document.getElementById('cat-select').innerHTML =
-    `<option value="${stageData?.mode||'general'}">${stageData?.mode||'general'}</option>`;
+    `<option value="${stageData.mode||'general'}">${stageData.mode||'general'}</option>`;
   document.getElementById('lang-select').innerHTML =
-    `<option value="${stageData?.lang||'th-TH'}">${stageData?.lang||'th-TH'}</option>`;
-  document.getElementById('diff-select').value = stageData?.diff || 'easy';
-  document.getElementById('cat-select').value  = stageData?.mode || 'general';
-  document.getElementById('lang-select').value = stageData?.lang || 'th-TH';
+    `<option value="${stageData.lang||'th-TH'}">${stageData.lang||'th-TH'}</option>`;
+  document.getElementById('diff-select').value = stageData.diff || 'easy';
+  document.getElementById('cat-select').value  = stageData.mode || 'general';
+  document.getElementById('lang-select').value = stageData.lang || 'th-TH';
 
   sessionStorage.setItem('is_training_mode', '0');
   enterGame();
@@ -11529,7 +11595,7 @@ const _accText = _repAccEl ? _repAccEl.innerText : '0%';
 const _weakRaw = JSON.parse(localStorage.getItem('nv_weakness') || '{}');
 const _topWeak = Object.entries(_weakRaw)
   .sort((a,b)=>b[1]-a[1]).slice(0,3)
-  .map(([char])=>{ const p=(window.THAI_PHONETIC_THERAPY_DB||[]).find(x=>x.char===char); return p?.advice||char; });
+  .map(([char])=>{ const p=(window.THAI_PHONETIC_THERAPY_DB||[]).find(x=>x.char===char); return (p && p.advice)||char; });
 
 // อ่านเวลาเล่นจาก sessionStorage
 const _playStart = parseInt(sessionStorage.getItem('cert_play_start') || '0');
