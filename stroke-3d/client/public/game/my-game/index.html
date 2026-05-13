@@ -112,17 +112,137 @@ body{
 .start-btn:hover{transform:scale(1.06);box-shadow:0 0 70px rgba(129,140,248,.5);}
 .start-btn:active{transform:scale(.96);}
 
+/* ── YouTube button ── */
+.start-yt-btn{
+  display:flex;align-items:center;gap:10px;
+  padding:13px 28px;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.18);
+  border-radius:50px;
+  font-family:'Noto Sans Thai',sans-serif;
+  font-size:14px;font-weight:600;
+  color:rgba(255,255,255,.75);
+  cursor:pointer;
+  backdrop-filter:blur(8px);
+  transition:all .25s;
+  opacity:0;animation:fadeUp .6s 1.05s forwards;
+}
+.start-yt-btn:hover{
+  background:rgba(252,84,84,.18);
+  border-color:var(--accent);
+  color:#fff;
+  transform:scale(1.04);
+  box-shadow:0 0 40px rgba(252,84,84,.2);
+}
+
 .start-hint{
   font-size:11px;color:rgba(255,255,255,.18);
   letter-spacing:1px;
-  opacity:0;animation:fadeUp .6s 1.1s forwards;
-  margin-top:8px;
+  opacity:0;animation:fadeUp .6s 1.2s forwards;
+  margin-top:4px;
 }
 
 @keyframes fadeUp{
   from{opacity:0;transform:translateY(18px)}
   to{opacity:1;transform:translateY(0)}
 }
+
+/* ════════════════════════════
+   YOUTUBE PANEL (on start screen)
+════════════════════════════ */
+#yt-panel{
+  display:none;
+  position:absolute;inset:0;z-index:10;
+  background:rgba(5,5,10,.97);
+  backdrop-filter:blur(18px);
+  flex-direction:column;align-items:center;justify-content:center;
+  gap:18px;padding:32px 24px;
+}
+#yt-panel.open{display:flex;}
+
+.ytp-title{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:32px;letter-spacing:3px;color:#fff;
+}
+.ytp-sub{font-size:13px;color:rgba(255,255,255,.3);letter-spacing:1px;margin-top:-10px;}
+
+.ytp-input-row{display:flex;gap:8px;width:100%;max-width:520px;}
+#yt-url-input{
+  flex:1;padding:13px 16px;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.15);
+  border-radius:12px;
+  font-family:'Noto Sans Thai',sans-serif;
+  font-size:14px;color:#fff;outline:none;
+  transition:border-color .2s;
+}
+#yt-url-input:focus{border-color:var(--accent);}
+#yt-url-input::placeholder{color:rgba(255,255,255,.22);}
+.ytp-add-btn{
+  padding:13px 22px;border-radius:12px;
+  background:rgba(252,84,84,.18);
+  border:1px solid rgba(252,84,84,.35);
+  color:var(--accent);font-weight:700;
+  font-size:14px;cursor:pointer;
+  transition:all .2s;white-space:nowrap;
+  font-family:'Noto Sans Thai',sans-serif;
+}
+.ytp-add-btn:hover{background:rgba(252,84,84,.32);border-color:var(--accent);}
+
+#yt-clip-list{
+  width:100%;max-width:520px;
+  max-height:240px;overflow-y:auto;
+  display:flex;flex-direction:column;gap:8px;
+}
+.yt-clip-row{
+  display:flex;align-items:center;gap:10px;
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:10px;padding:8px 12px;
+}
+.yt-clip-thumb{
+  width:56px;height:38px;border-radius:6px;
+  object-fit:cover;flex-shrink:0;
+  background:rgba(255,255,255,.07);
+}
+.yt-clip-info{flex:1;min-width:0;}
+.yt-clip-name{
+  font-size:12px;font-weight:600;color:rgba(255,255,255,.75);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.yt-clip-meta{
+  font-size:10px;color:rgba(252,84,84,.6);
+  font-family:'Space Mono',monospace;margin-top:2px;
+}
+.yt-clip-del{
+  background:none;border:none;color:rgba(255,255,255,.25);
+  cursor:pointer;font-size:20px;padding:2px 4px;
+  transition:color .15s;flex-shrink:0;
+}
+.yt-clip-del:hover{color:var(--accent);}
+
+.ytp-hint{font-size:11px;color:rgba(255,255,255,.18);letter-spacing:1px;}
+
+.ytp-btns{display:flex;gap:10px;width:100%;max-width:520px;}
+#ytp-start-btn{
+  flex:1;padding:14px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border:none;border-radius:40px;
+  font-family:'Noto Sans Thai',sans-serif;
+  font-size:15px;font-weight:700;color:#fff;
+  cursor:pointer;display:none;
+  transition:transform .2s,box-shadow .2s;
+  box-shadow:0 0 40px rgba(252,132,132,.25);
+}
+#ytp-start-btn:hover{transform:scale(1.04);}
+.ytp-close-btn{
+  padding:14px 20px;background:transparent;
+  border:1px solid var(--border);border-radius:40px;
+  font-family:'Noto Sans Thai',sans-serif;
+  font-size:13px;color:rgba(255,255,255,.35);
+  cursor:pointer;transition:all .2s;
+}
+.ytp-close-btn:hover{border-color:var(--accent);color:var(--accent);}
 
 /* ════════════════════════════
    GAME SCREEN
@@ -139,6 +259,11 @@ body{
 }
 
 #game-video{width:100%;height:100%;object-fit:cover;}
+#yt-player-wrap{
+  display:none;
+  position:absolute;inset:0;
+  width:100%;height:100%;
+}
 
 /* progress top */
 #progress-bar{
@@ -238,183 +363,101 @@ body{
   display:none;
   position:absolute;inset:0;
   z-index:15;
-  background:linear-gradient(160deg,rgba(6,6,18,.98) 0%,rgba(14,10,28,.98) 100%);
-  backdrop-filter:blur(24px);
+  background:rgba(5,5,10,.92);
+  backdrop-filter:blur(8px);
   align-items:center;justify-content:center;
 }
 #face-overlay.active{display:flex;}
-#face-overlay::before{
-  content:'';
-  position:absolute;inset:0;
-  background:
-    radial-gradient(ellipse 70% 50% at 15% 50%,rgba(129,140,248,.09) 0%,transparent 65%),
-    radial-gradient(ellipse 50% 70% at 85% 50%,rgba(252,132,132,.06) 0%,transparent 65%);
-  pointer-events:none;
-}
 
 .face-game-wrap{
-  display:grid;
-  grid-template-columns:1fr 300px;
-  grid-template-rows:auto 1fr;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
   gap:0;
-  width:100%;height:100%;
-  max-width:860px;
-  padding:28px 36px;
-  align-content:center;
-  position:relative;z-index:1;
+  width:100%;
+  max-width:820px;
+  padding:20px;
 }
 
 /* header */
 .fg-header{
-  grid-column:1/-1;
-  display:flex;align-items:baseline;gap:14px;
-  margin-bottom:24px;
-  padding-bottom:18px;
-  border-bottom:1px solid rgba(255,255,255,.07);
+  text-align:center;
+  margin-bottom:16px;
 }
 .fg-tag{
-  font-size:9px;letter-spacing:6px;text-transform:uppercase;
-  color:var(--accent2);font-weight:700;opacity:.6;
+  font-size:10px;letter-spacing:5px;text-transform:uppercase;
+  color:var(--accent);font-weight:600;
+  margin-bottom:4px;
 }
 #fg-title{
   font-family:'Bebas Neue',sans-serif;
-  font-size:clamp(30px,5vw,50px);
-  color:#fff;letter-spacing:3px;line-height:1;
+  font-size:clamp(36px,6vw,60px);
+  color:#fff;letter-spacing:2px;
+  line-height:1;
 }
 #fg-desc{
-  font-size:12px;color:rgba(255,255,255,.28);
-  margin-left:auto;letter-spacing:.3px;
+  font-size:13px;color:rgba(255,255,255,.35);
+  margin-top:6px;
 }
 
-/* LEFT panel */
-.fg-side{
-  grid-column:1;grid-row:2;
-  display:flex;flex-direction:column;
-  gap:18px;padding-right:44px;
+/* main layout: camera + game-ui */
+.fg-main{
+  display:flex;
+  gap:24px;
+  width:100%;
+  align-items:flex-start;
   justify-content:center;
+  flex-wrap:wrap;
 }
 
-.fg-instruction{
-  position:relative;
-  background:rgba(129,140,248,.05);
-  border:1px solid rgba(129,140,248,.15);
-  border-radius:18px;padding:22px 24px;overflow:hidden;
-}
-.fg-instruction::before{
-  content:'';position:absolute;top:0;left:0;right:0;height:1px;
-  background:linear-gradient(90deg,transparent,rgba(129,140,248,.45),transparent);
-}
-.fg-instruction-label{
-  font-size:9px;letter-spacing:4px;text-transform:uppercase;
-  color:rgba(129,140,248,.45);margin-bottom:10px;
-}
-#fg-action-text{font-size:24px;font-weight:800;color:#fff;line-height:1.3;}
-#fg-action-sub{font-size:13px;color:rgba(255,255,255,.32);margin-top:6px;line-height:1.5;}
-
-.fg-status-row{display:flex;align-items:center;gap:12px;padding:0 2px;}
-.fg-dot{
-  width:8px;height:8px;border-radius:50%;
-  background:rgba(255,255,255,.12);
-  transition:background .25s,box-shadow .25s;flex-shrink:0;
-}
-.fg-dot.ok{background:var(--green);box-shadow:0 0 10px rgba(74,222,128,.7);}
-.fg-dot.active{background:var(--accent2);box-shadow:0 0 10px rgba(129,140,248,.7);}
-#fg-status-text{font-size:13px;color:rgba(255,255,255,.38);letter-spacing:.3px;}
-
-.fg-hold-wrap{display:flex;flex-direction:column;gap:9px;}
-.fg-hold-label{
-  display:flex;justify-content:space-between;
-  font-size:10px;color:rgba(255,255,255,.22);
-  letter-spacing:2px;text-transform:uppercase;
-}
-#fg-hold-time{color:rgba(255,255,255,.65);font-weight:700;}
-.fg-hold-track{
-  height:5px;background:rgba(255,255,255,.06);
-  border-radius:3px;overflow:hidden;
-}
-#fg-hold-bar{
-  height:100%;width:0%;
-  background:linear-gradient(90deg,var(--accent2),#c4b5fd,var(--accent));
-  border-radius:3px;transition:width .1s linear;
-  box-shadow:0 0 8px rgba(129,140,248,.45);
-}
-
-.fg-score-track{display:flex;gap:6px;flex-wrap:wrap;}
-.score-pip{
-  width:30px;height:30px;border-radius:9px;
-  background:rgba(255,255,255,.04);
-  border:1px solid rgba(255,255,255,.08);
-  display:flex;align-items:center;justify-content:center;
-  font-size:11px;font-weight:700;color:rgba(255,255,255,.18);
-  transition:all .35s cubic-bezier(.34,1.56,.64,1);
-}
-.score-pip.done{
-  background:rgba(74,222,128,.1);border-color:rgba(74,222,128,.3);
-  color:var(--green);box-shadow:0 0 12px rgba(74,222,128,.18);
-}
-.score-pip.current{
-  background:rgba(129,140,248,.14);border-color:var(--accent2);
-  color:#fff;box-shadow:0 0 16px rgba(129,140,248,.3);
-  transform:scale(1.18);
-}
-
-#fg-pass-btn{
-  padding:16px 40px;
-  background:linear-gradient(135deg,#22c55e,#16a34a);
-  border:none;border-radius:50px;
-  color:#fff;font-family:'Noto Sans Thai',sans-serif;
-  font-size:15px;font-weight:700;cursor:pointer;display:none;
-  transition:transform .2s,box-shadow .2s;
-  box-shadow:0 8px 28px rgba(74,222,128,.32);
-  align-self:flex-start;letter-spacing:.5px;
-}
-#fg-pass-btn:hover{transform:translateY(-2px) scale(1.04);box-shadow:0 12px 36px rgba(74,222,128,.48);}
-
-/* RIGHT: camera */
+/* camera panel */
 .fg-cam-panel{
-  grid-column:2;grid-row:2;
   position:relative;
-  width:300px;flex-shrink:0;
-  display:flex;flex-direction:column;align-items:center;gap:14px;
+  width:260px;flex-shrink:0;
 }
 #fg-video{
-  width:300px;height:225px;
-  object-fit:cover;border-radius:18px;
-  transform:scaleX(-1);display:block;
-  box-shadow:0 0 0 1px rgba(255,255,255,.07),0 24px 64px rgba(0,0,0,.55);
+  width:260px;height:195px;
+  object-fit:cover;
+  border-radius:16px;
+  transform:scaleX(-1);
+  display:block;
 }
 #fg-canvas{
   position:absolute;top:0;left:0;
-  width:300px;height:225px;
-  border-radius:18px;pointer-events:none;transform:scaleX(-1);
+  width:260px;height:195px;
+  border-radius:16px;
+  pointer-events:none;
+  transform:scaleX(-1);
 }
+
 .cam-frame{
-  position:absolute;top:0;left:0;
-  width:300px;height:225px;
-  border-radius:18px;
-  border:1px solid rgba(255,255,255,.05);pointer-events:none;
+  position:absolute;inset:0;
+  border-radius:16px;
+  border:2px solid rgba(255,255,255,.08);
+  pointer-events:none;
 }
 .cam-frame-corner{
-  position:absolute;width:18px;height:18px;
-  border-color:var(--accent2);border-style:solid;
+  position:absolute;
+  width:16px;height:16px;
+  border-color:var(--accent2);
+  border-style:solid;
 }
-.cam-frame-corner.tl{top:-1px;left:-1px;border-width:2px 0 0 2px;border-radius:5px 0 0 0;}
-.cam-frame-corner.tr{top:-1px;right:-1px;border-width:2px 2px 0 0;border-radius:0 5px 0 0;}
-.cam-frame-corner.bl{bottom:-1px;left:-1px;border-width:0 0 2px 2px;border-radius:0 0 0 5px;}
-.cam-frame-corner.br{bottom:-1px;right:-1px;border-width:0 2px 2px 0;border-radius:0 0 5px 0;}
-
+.cam-frame-corner.tl{top:-1px;left:-1px;border-width:2px 0 0 2px;border-radius:4px 0 0 0;}
+.cam-frame-corner.tr{top:-1px;right:-1px;border-width:2px 2px 0 0;border-radius:0 4px 0 0;}
+.cam-frame-corner.bl{bottom:-1px;left:-1px;border-width:0 0 2px 2px;border-radius:0 0 0 4px;}
+.cam-frame-corner.br{bottom:-1px;right:-1px;border-width:0 2px 2px 0;border-radius:0 0 4px 0;}
 
 /* face action indicator ring */
 .face-ring-wrap{
-  margin-top:0;
+  margin-top:12px;
   display:flex;justify-content:center;
 }
 .face-ring{
   position:relative;
-  width:88px;height:88px;
+  width:72px;height:72px;
 }
 .face-ring svg{
-  width:88px;height:88px;
+  width:72px;height:72px;
   transform:rotate(-90deg);
 }
 .face-ring-bg{stroke:rgba(255,255,255,.1);}
@@ -429,7 +472,7 @@ body{
 .face-ring-emoji{
   position:absolute;inset:0;
   display:flex;align-items:center;justify-content:center;
-  font-size:36px;
+  font-size:28px;
 }
 
 /* game side panel */
@@ -556,15 +599,16 @@ body{
 /* ──── face oval guide ──── */
 #face-oval-guide{
   position:absolute;
-  top:14px;left:50%;
+  top:18px;left:50%;
   transform:translateX(-50%);
-  width:130px;height:170px;
+  width:110px;height:145px;
   border-radius:50%;
-  border:2px dashed rgba(0,220,255,0.45);
+  border:2px dashed rgba(0,220,255,0.55);
   pointer-events:none;
   z-index:5;
-  box-shadow:0 0 18px rgba(0,220,255,0.12) inset,0 0 10px rgba(0,220,255,0.1);
-  animation:oval-pulse 2.5s ease-in-out infinite;
+  box-shadow:0 0 14px rgba(0,220,255,0.15) inset,
+             0 0 10px rgba(0,220,255,0.12);
+  animation:oval-pulse 2s ease-in-out infinite;
 }
 @keyframes oval-pulse{
   0%,100%{border-color:rgba(0,220,255,0.45);}
@@ -581,7 +625,14 @@ body{
 
 /* ──── live HUD panel ──── */
 #fg-live-hud{
-  display:none !important;
+  margin-top:10px;
+  background:rgba(0,0,0,0.55);
+  border:1px solid rgba(0,220,255,0.15);
+  border-radius:10px;
+  padding:10px 12px;
+  font-family:'Space Mono',monospace;
+  font-size:11px;
+  display:flex;flex-direction:column;gap:5px;
 }
 .hud-row{
   display:flex;align-items:center;gap:6px;
@@ -620,201 +671,6 @@ body{
   border-radius:16px;
 }
 .success-flash.show{opacity:1;}
-
-/* ══ START CLIP BUTTON ══ */
-.start-clip-btn{
-  position:relative;
-  display:flex;align-items:center;gap:10px;
-  padding:13px 28px;
-  background:rgba(255,255,255,.06);
-  border:1px solid rgba(255,255,255,.18);
-  border-radius:50px;
-  font-family:'Noto Sans Thai',sans-serif;
-  font-size:14px;font-weight:600;
-  color:rgba(255,255,255,.75);
-  cursor:pointer;
-  backdrop-filter:blur(8px);
-  transition:all .25s;
-  opacity:0;animation:fadeUp .6s 1.05s forwards;
-}
-.start-clip-btn:hover{
-  background:rgba(129,140,248,.18);
-  border-color:var(--accent2);
-  color:#fff;
-  transform:scale(1.04);
-  box-shadow:0 0 40px rgba(129,140,248,.25);
-}
-.scb-icon{font-size:17px;}
-.scb-badge{
-  background:var(--accent);
-  color:#fff;font-size:10px;font-weight:700;
-  border-radius:10px;padding:1px 7px;
-  margin-left:2px;
-}
-
-/* ══ CLIP PANEL ══ */
-#clip-panel{
-  display:none;
-  position:absolute;inset:0;z-index:50;
-  background:rgba(5,5,10,.97);
-  backdrop-filter:blur(18px);
-  flex-direction:column;align-items:center;
-  padding:24px 20px 28px;gap:14px;
-  overflow-y:auto;
-}
-#clip-panel.open{display:flex;}
-
-.cp-header{
-  width:100%;max-width:540px;
-  display:flex;justify-content:space-between;align-items:center;
-  flex-shrink:0;
-}
-.cp-title{
-  font-family:'Bebas Neue',sans-serif;
-  font-size:26px;letter-spacing:3px;color:#fff;
-}
-.cp-close-btn{
-  padding:8px 18px;border-radius:30px;
-  border:1px solid rgba(255,255,255,.15);
-  background:rgba(255,255,255,.06);
-  color:rgba(255,255,255,.5);
-  font-family:'Noto Sans Thai',sans-serif;
-  font-size:12px;cursor:pointer;
-  transition:all .2s;
-}
-.cp-close-btn:hover{border-color:var(--accent);color:var(--accent);}
-
-/* tabs */
-.cp-tabs{
-  display:flex;gap:8px;
-  width:100%;max-width:540px;flex-shrink:0;
-}
-.cp-tab{
-  flex:1;padding:10px;border-radius:12px;
-  border:1px solid rgba(255,255,255,.1);
-  background:rgba(255,255,255,.04);
-  font-family:'Noto Sans Thai',sans-serif;
-  font-size:13px;font-weight:600;
-  color:rgba(255,255,255,.4);cursor:pointer;
-  transition:all .2s;
-}
-.cp-tab.active{
-  background:rgba(129,140,248,.15);
-  border-color:var(--accent2);
-  color:#fff;
-}
-.cp-pane{width:100%;max-width:540px;flex-shrink:0;}
-
-/* drop zone */
-.cp-drop{
-  display:flex;flex-direction:column;align-items:center;gap:7px;
-  width:100%;border:2px dashed rgba(255,255,255,.12);
-  border-radius:16px;padding:22px 20px;
-  cursor:pointer;transition:border-color .2s,background .2s;
-  background:rgba(255,255,255,.02);
-}
-.cp-drop:hover,.cp-drop.drag{
-  border-color:var(--accent2);background:rgba(129,140,248,.05);
-}
-.cp-drop input[type=file]{display:none;}
-.cp-drop-icon{font-size:24px;}
-.cp-drop-label{font-size:13px;font-weight:600;color:rgba(255,255,255,.6);}
-.cp-drop-sub{font-size:11px;color:rgba(255,255,255,.2);letter-spacing:1px;}
-
-/* youtube input */
-.yt-input-row{display:flex;gap:8px;width:100%;}
-#yt-url-input{
-  flex:1;padding:12px 16px;
-  background:rgba(255,255,255,.05);
-  border:1px solid rgba(255,255,255,.12);
-  border-radius:12px;
-  font-family:'Noto Sans Thai',sans-serif;
-  font-size:13px;color:#fff;outline:none;
-  transition:border-color .2s;
-}
-#yt-url-input:focus{border-color:var(--accent2);}
-#yt-url-input::placeholder{color:rgba(255,255,255,.2);}
-.yt-add-btn{
-  padding:12px 22px;border-radius:12px;
-  background:rgba(252,84,84,.15);
-  border:1px solid rgba(252,84,84,.3);
-  color:var(--accent);font-weight:700;
-  font-size:14px;cursor:pointer;
-  transition:all .2s;white-space:nowrap;
-  font-family:'Noto Sans Thai',sans-serif;
-}
-.yt-add-btn:hover{background:rgba(252,84,84,.25);border-color:var(--accent);}
-.yt-hint{font-size:10px;color:rgba(255,255,255,.2);letter-spacing:1px;padding-left:2px;}
-
-/* clip list */
-#cp-list{
-  width:100%;max-width:540px;
-  max-height:180px;overflow-y:auto;
-  display:flex;flex-direction:column;gap:6px;
-}
-.cp-row{
-  display:flex;align-items:center;gap:10px;
-  background:rgba(255,255,255,.04);
-  border:1px solid rgba(255,255,255,.07);
-  border-radius:10px;padding:8px 12px;
-}
-.cp-thumb{
-  width:48px;height:34px;border-radius:6px;
-  object-fit:cover;flex-shrink:0;
-  background:rgba(255,255,255,.06);
-}
-.cp-num{
-  width:20px;height:20px;border-radius:50%;flex-shrink:0;
-  background:rgba(129,140,248,.2);border:1px solid rgba(129,140,248,.3);
-  display:flex;align-items:center;justify-content:center;
-  font-size:10px;font-weight:700;color:var(--accent2);
-}
-.cp-info{flex:1;min-width:0;}
-.cp-name{font-size:12px;font-weight:600;color:rgba(255,255,255,.75);
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.cp-meta{font-size:10px;color:rgba(0,220,255,.5);
-  font-family:'Space Mono',monospace;margin-top:1px;}
-.cp-del{background:none;border:none;color:rgba(255,255,255,.25);
-  cursor:pointer;font-size:18px;padding:2px 4px;
-  transition:color .15s;flex-shrink:0;}
-.cp-del:hover{color:var(--accent);}
-
-/* math box */
-#cp-math{
-  width:100%;max-width:540px;flex-shrink:0;
-  background:rgba(0,0,0,.35);
-  border:1px solid rgba(0,220,255,.1);
-  border-radius:12px;padding:10px 16px;
-  font-family:'Space Mono',monospace;
-  font-size:10px;color:rgba(0,220,255,.5);
-  line-height:1.9;display:none;
-}
-#cp-math b{color:rgba(0,220,255,.9);}
-
-/* bottom buttons */
-.cp-btns{
-  width:100%;max-width:540px;
-  display:flex;gap:10px;flex-shrink:0;
-}
-#cp-start-btn{
-  flex:1;padding:14px;
-  background:linear-gradient(135deg,var(--accent),var(--accent2));
-  border:none;border-radius:40px;
-  font-family:'Noto Sans Thai',sans-serif;
-  font-size:15px;font-weight:700;color:#fff;
-  cursor:pointer;
-  transition:transform .2s,box-shadow .2s;
-  box-shadow:0 0 40px rgba(252,132,132,.25);
-}
-#cp-start-btn:hover{transform:scale(1.04);box-shadow:0 0 60px rgba(129,140,248,.4);}
-#cp-clear-btn{
-  padding:14px 20px;background:transparent;
-  border:1px solid var(--border);border-radius:40px;
-  font-family:'Noto Sans Thai',sans-serif;
-  font-size:13px;color:rgba(255,255,255,.35);
-  cursor:pointer;transition:all .2s;
-}
-#cp-clear-btn:hover{border-color:var(--accent);color:var(--accent);}
 </style>
 </head>
 <body>
@@ -829,62 +685,34 @@ body{
     <div class="start-title">SPIDERTROKE</div>
     <div class="start-line"></div>
     <div class="start-sub">เกมผจญภัยแบบโต้ตอบ</div>
-
-    <!-- ── main CTA ── -->
-    <button class="start-btn" onclick="startGame()">▶ เริ่มเกมหลัก</button>
-
-    <!-- ── custom clip / youtube button ── -->
-    <button class="start-clip-btn" onclick="openClipPanel()">
-      <span class="scb-icon">🎬</span>
-      <span class="scb-text">เพิ่มคลิปของฉัน / YouTube</span>
-      <span class="scb-badge" id="clip-badge" style="display:none">0</span>
+    <button class="start-btn" onclick="startGame()">▶ เริ่มเกม</button>
+    <!-- ── YouTube button (new) ── -->
+    <button class="start-yt-btn" onclick="openYTPanel()">
+      <span>▶</span>
+      <span>เล่นจาก YouTube</span>
     </button>
-
-    <div class="start-hint">กด ESC เพื่อหยุด • ต้องใช้กล้องสำหรับ Face Challenge</div>
+    <div class="start-hint">กด ESC เพื่อหยุด • ต้องใช้กล้องสำหรับ Minigame</div>
   </div>
 
-  <!-- ══ CLIP + YOUTUBE PANEL ══ -->
-  <div id="clip-panel">
-    <div class="cp-header">
-      <div class="cp-title">🎬 คลิปของฉัน</div>
-      <button class="cp-close-btn" onclick="closeClipPanel()">✕ ปิด</button>
+  <!-- ══ YOUTUBE PANEL ══ -->
+  <div id="yt-panel">
+    <div class="ytp-title">🎬 YouTube Mode</div>
+    <div class="ytp-sub">วาง URL แล้วเล่นคลิปของคุณพร้อม Face Challenge สุ่มกลางคลิป</div>
+
+    <div class="ytp-input-row">
+      <input id="yt-url-input" type="text"
+             placeholder="https://youtu.be/xxxxx หรือ youtube.com/watch?v=xxxxx"
+             onkeydown="if(event.key==='Enter') addYTClip()">
+      <button class="ytp-add-btn" onclick="addYTClip()">+ เพิ่ม</button>
     </div>
 
-    <!-- tabs -->
-    <div class="cp-tabs">
-      <button class="cp-tab active" id="tab-file" onclick="switchTab('file')">📁 ไฟล์วิดีโอ</button>
-      <button class="cp-tab" id="tab-yt" onclick="switchTab('yt')">▶ YouTube</button>
-    </div>
+    <div id="yt-clip-list"></div>
 
-    <!-- FILE TAB -->
-    <div id="cp-pane-file" class="cp-pane">
-      <label class="cp-drop" id="cp-drop">
-        <input type="file" id="cp-file-input" accept="video/*" multiple
-               onchange="handleClipUpload(this)">
-        <div class="cp-drop-icon">📂</div>
-        <div class="cp-drop-label">คลิกเลือกหรือลากไฟล์มาวาง</div>
-        <div class="cp-drop-sub">MP4 · MOV · WEBM — เลือกได้หลายไฟล์</div>
-      </label>
-    </div>
+    <div class="ytp-hint">เพิ่มได้หลายคลิป — จะเล่นต่อกัน มีเกมสุ่มคั่นกลาง</div>
 
-    <!-- YOUTUBE TAB -->
-    <div id="cp-pane-yt" class="cp-pane" style="display:none">
-      <div class="yt-input-row">
-        <input id="yt-url-input" type="text"
-               placeholder="วาง YouTube URL เช่น https://youtu.be/xxxxx"
-               onkeydown="if(event.key==='Enter')addYTClip()">
-        <button class="yt-add-btn" onclick="addYTClip()">+ เพิ่ม</button>
-      </div>
-      <div class="yt-hint">รองรับ youtube.com/watch?v= และ youtu.be/</div>
-    </div>
-
-    <!-- shared clip list -->
-    <div id="cp-list"></div>
-    <div id="cp-math"></div>
-
-    <div class="cp-btns">
-      <button id="cp-clear-btn" onclick="clearClips()" style="display:none">🗑 ล้างทั้งหมด</button>
-      <button id="cp-start-btn" onclick="startWithCustomClips()" style="display:none">▶ เล่นคลิปของฉัน</button>
+    <div class="ytp-btns">
+      <button class="ytp-close-btn" onclick="closeYTPanel()">✕ ยกเลิก</button>
+      <button id="ytp-start-btn" onclick="startYTMode()">▶ เริ่มเลย!</button>
     </div>
   </div>
 </div>
@@ -895,8 +723,11 @@ body{
 
     <div id="progress-bar"><div id="progress-fill" style="width:0%"></div></div>
 
+    <!-- local video (used in normal mode) -->
     <video id="game-video" playsinline></video>
-    <div id="yt-wrap" style="display:none;position:absolute;inset:0;"></div>
+
+    <!-- YouTube iframe container (used in YT mode) -->
+    <div id="yt-player-wrap"></div>
 
     <!-- top bar -->
     <div id="top-bar">
@@ -925,7 +756,7 @@ body{
       </span>
     </div>
 
-    <!-- FACE GAME OVERLAY -->
+    <!-- ══════════ FACE GAME OVERLAY ══════════ -->
     <div id="face-overlay">
       <div class="face-game-wrap">
 
@@ -936,41 +767,14 @@ body{
           <div id="fg-desc">ทำหน้าให้ตรงกับที่กำหนด</div>
         </div>
 
-        <!-- LEFT: game UI -->
-        <div class="fg-side">
+        <!-- main content -->
+        <div class="fg-main">
 
-          <div class="fg-instruction">
-            <div class="fg-instruction-label">ทำท่านี้</div>
-            <div id="fg-action-text">—</div>
-            <div id="fg-action-sub">—</div>
-          </div>
-
-          <div class="fg-status-row">
-            <div class="fg-dot" id="fg-dot"></div>
-            <div id="fg-status-text">รอตรวจจับหน้า…</div>
-          </div>
-
-          <div class="fg-hold-wrap">
-            <div class="fg-hold-label">
-              <span>HOLD</span>
-              <span id="fg-hold-time">0.0 / 3s</span>
-            </div>
-            <div class="fg-hold-track">
-              <div id="fg-hold-bar"></div>
-            </div>
-          </div>
-
-          <div class="fg-score-track" id="fg-score-track"></div>
-
-          <button id="fg-pass-btn" onclick="onFaceGamePass()">✓ ผ่านแล้ว ไปต่อ!</button>
-
-        </div>
-
-        <!-- RIGHT: camera -->
-        <div class="fg-cam-panel">
-          <div style="position:relative;width:300px;">
+          <!-- camera -->
+          <div class="fg-cam-panel">
             <video id="fg-video" autoplay playsinline muted></video>
             <canvas id="fg-canvas"></canvas>
+            <!-- face oval guide frame -->
             <div id="face-oval-guide">
               <span class="oval-label">วางหน้าในกรอบ</span>
             </div>
@@ -985,82 +789,117 @@ body{
               <div class="cam-spinner"></div>
               <span>กำลังเปิดกล้อง…</span>
             </div>
-          </div>
-          <!-- ring + emoji below camera -->
-          <div class="face-ring-wrap">
-            <div class="face-ring" id="face-ring">
-              <svg viewBox="0 0 60 60">
-                <circle class="face-ring-bg" cx="30" cy="30" r="27" stroke-width="4" fill="none"/>
-                <circle class="face-ring-fill" id="ring-fill" cx="30" cy="30" r="27" stroke-width="4" fill="none"/>
-              </svg>
-              <div class="face-ring-emoji" id="ring-emoji">😐</div>
+            <!-- ring -->
+            <div class="face-ring-wrap">
+              <div class="face-ring" id="face-ring">
+                <svg viewBox="0 0 60 60">
+                  <circle class="face-ring-bg" cx="30" cy="30" r="27" stroke-width="4" fill="none"/>
+                  <circle class="face-ring-fill" id="ring-fill" cx="30" cy="30" r="27" stroke-width="4" fill="none"/>
+                </svg>
+                <div class="face-ring-emoji" id="ring-emoji">😐</div>
+              </div>
+            </div>
+            <!-- live HUD below camera -->
+            <div id="fg-live-hud">
+              <div class="hud-row">
+                <span class="hud-key">smile_ratio</span>
+                <div class="hud-bar-wrap"><div class="hud-bar" id="hud-bar-smile"></div></div>
+                <span class="hud-val" id="hud-val-smile">—</span>
+              </div>
+              <div class="hud-row">
+                <span class="hud-key">purse_ratio</span>
+                <div class="hud-bar-wrap"><div class="hud-bar" id="hud-bar-purse"></div></div>
+                <span class="hud-val" id="hud-val-purse">—</span>
+              </div>
+              <div class="hud-row">
+                <span class="hud-key">open_ratio</span>
+                <div class="hud-bar-wrap"><div class="hud-bar" id="hud-bar-open"></div></div>
+                <span class="hud-val" id="hud-val-open">—</span>
+              </div>
+              <div class="hud-row">
+                <span class="hud-key">brow_ratio</span>
+                <div class="hud-bar-wrap"><div class="hud-bar" id="hud-bar-brow"></div></div>
+                <span class="hud-val" id="hud-val-brow">—</span>
+              </div>
+              <hr class="hud-divider">
+              <div class="hud-row">
+                <span class="hud-key" style="color:rgba(0,220,255,0.5)">TARGET</span>
+                <span class="hud-val" id="hud-target-val" style="min-width:unset;color:rgba(0,220,255,0.7);font-size:10px">—</span>
+              </div>
             </div>
           </div>
-          <!-- hidden HUD (kept for JS) -->
-          <div id="fg-live-hud" style="display:none">
-            <div class="hud-row"><span class="hud-key">smile_ratio</span><div class="hud-bar-wrap"><div class="hud-bar" id="hud-bar-smile"></div></div><span class="hud-val" id="hud-val-smile">—</span></div>
-            <div class="hud-row"><span class="hud-key">purse_ratio</span><div class="hud-bar-wrap"><div class="hud-bar" id="hud-bar-purse"></div></div><span class="hud-val" id="hud-val-purse">—</span></div>
-            <div class="hud-row"><span class="hud-key">open_ratio</span><div class="hud-bar-wrap"><div class="hud-bar" id="hud-bar-open"></div></div><span class="hud-val" id="hud-val-open">—</span></div>
-            <div class="hud-row"><span class="hud-key">brow_ratio</span><div class="hud-bar-wrap"><div class="hud-bar" id="hud-bar-brow"></div></div><span class="hud-val" id="hud-val-brow">—</span></div>
-            <div class="hud-row"><span class="hud-key">TARGET</span><span class="hud-val" id="hud-target-val">—</span></div>
+
+          <!-- side panel -->
+          <div class="fg-side">
+
+            <!-- instruction -->
+            <div class="fg-instruction">
+              <div class="fg-instruction-label">ทำท่านี้</div>
+              <div id="fg-action-text">—</div>
+              <div id="fg-action-sub">—</div>
+            </div>
+
+            <!-- status -->
+            <div class="fg-status-row">
+              <div class="fg-dot" id="fg-dot"></div>
+              <div id="fg-status-text">รอตรวจจับหน้า…</div>
+            </div>
+
+            <!-- hold bar -->
+            <div class="fg-hold-wrap">
+              <div class="fg-hold-label">
+                <span>HOLD</span>
+                <span id="fg-hold-time">0.0 / 3.0s</span>
+              </div>
+              <div class="fg-hold-track">
+                <div id="fg-hold-bar"></div>
+              </div>
+            </div>
+
+            <!-- score pips -->
+            <div class="fg-score-track" id="fg-score-track"></div>
+
+            <!-- pass button -->
+            <button id="fg-pass-btn" onclick="onFaceGamePass()">✓ ผ่านแล้ว ไปต่อ!</button>
+
           </div>
         </div>
-
       </div>
     </div>
 
   </div>
 </div>
 
-
 <script>
 // ═══════════════════════════════════════════════════════
-//  SCENE CONFIG
-//  โครงสร้าง: video → facegame → video → facegame → ...
-//  แก้ไข src / text / game ได้เลย
+//  SCENE CONFIG (normal mode)
 // ═══════════════════════════════════════════════════════
-// ─────────────────────────────────────────────────────────────
-//  SCENES — 11 วิดีโอ + 10 Face Games คั่นกลาง
-//  แก้ได้: src, text, holdSec, rounds
-//  action: smile | open | brow | close_eye | purse
-// ─────────────────────────────────────────────────────────────
-let SCENES = [
-  // ── ตอนที่ 1 ──
+const SCENES = [
   { id:0,  type:"video",    label:"ตอนที่ 1",          src:"videos/scene1.mp4",  text:"ตอนที่ 1 — แก้ข้อความได้ในโค้ด",         next:1  },
   { id:1,  type:"facegame", label:"Face Challenge 1",  title:"ยิ้มสิ!",          desc:"ยิ้มให้กว้างที่สุด แล้วค้างไว้",         action:"smile",     emoji:"😁", holdSec:3, rounds:10, next:2  },
-  // ── ตอนที่ 2 ──
   { id:2,  type:"video",    label:"ตอนที่ 2",          src:"videos/scene2.mp4",  text:"ตอนที่ 2 — แก้ข้อความได้ในโค้ด",         next:3  },
   { id:3,  type:"facegame", label:"Face Challenge 2",  title:"อ้าปากกว้าง!",    desc:"อ้าปากให้สุด แล้วค้างไว้",               action:"open",      emoji:"😮", holdSec:3, rounds:10, next:4  },
-  // ── ตอนที่ 3 ──
   { id:4,  type:"video",    label:"ตอนที่ 3",          src:"videos/scene3.mp4",  text:"ตอนที่ 3 — แก้ข้อความได้ในโค้ด",         next:5  },
   { id:5,  type:"facegame", label:"Face Challenge 3",  title:"เลิกคิ้ว!",        desc:"เลิกคิ้วทั้งสองข้างขึ้นให้สูง",           action:"brow",      emoji:"🤨", holdSec:3, rounds:10, next:6  },
-  // ── ตอนที่ 4 ──
   { id:6,  type:"video",    label:"ตอนที่ 4",          src:"videos/scene4.mp4",  text:"ตอนที่ 4 — แก้ข้อความได้ในโค้ด",         next:7  },
   { id:7,  type:"facegame", label:"Face Challenge 4",  title:"ยิ้มสิ!",           desc:"ยิ้มให้กว้างที่สุด แล้วค้างไว้",          action:"smile",     emoji:"😁", holdSec:3, rounds:10, next:8  },
-  // ── ตอนที่ 5 ──
   { id:8,  type:"video",    label:"ตอนที่ 5",          src:"videos/scene5.mp4",  text:"ตอนที่ 5 — แก้ข้อความได้ในโค้ด",         next:9  },
   { id:9,  type:"facegame", label:"Face Challenge 5",  title:"ทำปากจู๋!",        desc:"ทำปากจู๋ อย่าอ้าปาก แล้วค้างไว้",        action:"purse",     emoji:"😗", holdSec:3, rounds:10, next:10 },
-  // ── ตอนที่ 6 ──
   { id:10, type:"video",    label:"ตอนที่ 6",          src:"videos/scene6.mp4",  text:"ตอนที่ 6 — แก้ข้อความได้ในโค้ด",         next:11 },
   { id:11, type:"facegame", label:"Face Challenge 6",  title:"ยิ้มให้แย้ม!",     desc:"ยิ้มให้กว้างอีกครั้ง ค้างไว้",           action:"smile",     emoji:"😄", holdSec:3, rounds:10, next:12 },
-  // ── ตอนที่ 7 ──
   { id:12, type:"video",    label:"ตอนที่ 7",          src:"videos/scene7.mp4",  text:"ตอนที่ 7 — แก้ข้อความได้ในโค้ด",         next:13 },
   { id:13, type:"facegame", label:"Face Challenge 7",  title:"อ้าปากอีกที!",     desc:"อ้าปากกว้างๆ ค้างไว้ให้นานขึ้น",         action:"open",      emoji:"😲", holdSec:3, rounds:10, next:14 },
-  // ── ตอนที่ 8 ──
   { id:14, type:"video",    label:"ตอนที่ 8",          src:"videos/scene8.mp4",  text:"ตอนที่ 8 — แก้ข้อความได้ในโค้ด",         next:15 },
   { id:15, type:"facegame", label:"Face Challenge 8",  title:"เลิกคิ้วสูงๆ!",   desc:"เลิกคิ้วให้สุด ค้างนานขึ้น",             action:"brow",      emoji:"🙆", holdSec:3, rounds:10, next:16 },
-  // ── ตอนที่ 9 ──
   { id:16, type:"video",    label:"ตอนที่ 9",          src:"videos/scene9.mp4",  text:"ตอนที่ 9 — แก้ข้อความได้ในโค้ด",         next:17 },
   { id:17, type:"facegame", label:"Face Challenge 9",  title:"เลิกคิ้วสูงๆ!",    desc:"เลิกคิ้วทั้งสองข้างขึ้นให้สูงสุด",        action:"brow",      emoji:"🤨", holdSec:3, rounds:10, next:18 },
-  // ── ตอนที่ 10 ──
   { id:18, type:"video",    label:"ตอนที่ 10",         src:"videos/scene10.mp4", text:"ตอนที่ 10 — แก้ข้อความได้ในโค้ด",        next:19 },
   { id:19, type:"facegame", label:"Face Challenge 10", title:"ปากจู๋สุดท้าย!",  desc:"ทำปากจู๋ค้างไว้ — ด่านสุดท้ายแล้ว!",    action:"purse",     emoji:"😙", holdSec:3, rounds:10, next:20 },
-  // ── ตอนสุดท้าย ──
   { id:20, type:"video",    label:"ตอนที่ 11 — จบ",   src:"videos/scene11.mp4", text:"🎉 ยอดเยี่ยมมาก! ผ่านทุก Face Challenge แล้ว!", next:null }
 ]
 
 // ─────────────────────────────────────────────────────────────
-//  Landmark indices — ตรงกับ Python ทุกตัว
+//  Landmark indices
 // ─────────────────────────────────────────────────────────────
 const LM = {
   UPPER_LIP:13, LOWER_LIP:14,
@@ -1070,35 +909,28 @@ const LM = {
   L_BROW:105,   L_EYE_REF:33,
   R_BROW:334,   R_EYE_REF:263,
   FACE_L:234,   FACE_R:454,
-  NOSE_TIP:1,   FOREHEAD:10   // ใช้เช็คว่าหน้าอยู่ในกรอบ
+  NOSE_TIP:1,   FOREHEAD:10
 }
 
 function dist(a,b){ return Math.hypot(a.x-b.x, a.y-b.y) }
 
-// เช็คว่าหน้าอยู่ในกรอบ oval บนกล้อง
-// oval อยู่ที่ x=50%  y≈18px จาก top, ขนาด 110×145px ในกรอบ 260×195px
-// → normalize: cx=0.5, cy≈0.25, rx≈0.21, ry≈0.37
 function isFaceInOval(lm){
   const nose = lm[LM.NOSE_TIP]
   const fore = lm[LM.FOREHEAD]
-  const cx = 0.50, cy = 0.38   // กึ่งกลาง oval (normalized 0-1)
-  const rx = 0.22, ry = 0.40   // รัศมี x, y
-  // เช็คว่า nose tip และ forehead อยู่ในหรือใกล้ oval
+  const cx = 0.50, cy = 0.38
+  const rx = 0.22, ry = 0.40
   const noseIn = Math.pow((nose.x-cx)/rx,2) + Math.pow((nose.y-cy)/ry,2) <= 1.4
   const foreIn = Math.pow((fore.x-cx)/rx,2) + Math.pow((fore.y-cy)/ry,2) <= 1.4
   return noseIn && foreIn
 }
 
-// สูตรเดียวกับ get_ratios() ใน Python ทุกบรรทัด
 function getRatios(lm){
   const mouth_w = dist(lm[LM.MOUTH_L],   lm[LM.MOUTH_R])
   const mouth_h = dist(lm[LM.UPPER_LIP], lm[LM.LOWER_LIP])
   const face_w  = dist(lm[LM.FACE_L],    lm[LM.FACE_R])
 
-  // smile_ratio: ใช้ mouth_w/face_w แทน mouth_w/mouth_h เพื่อป้องกันค่าพุ่งเมื่อปากปิด
-  // คูณ 10 เพื่อให้ scale ใกล้เคียงเดิม (ปกติ ~2-4, ยิ้ม ~3.5+)
   const smile_raw   = mouth_w / (face_w + 1e-6)
-  const smile_ratio = Math.min(smile_raw * 10, 9.99)  // clamp ไม่เกิน 9.99
+  const smile_ratio = Math.min(smile_raw * 10, 9.99)
 
   const purse_ratio = Math.min(mouth_h / (mouth_w + 1e-6), 9.99)
   const open_ratio  = mouth_h / (face_w  + 1e-6)
@@ -1110,25 +942,16 @@ function getRatios(lm){
   return {smile_ratio, purse_ratio, open_ratio, brow_ratio}
 }
 
-// ─────────────────────────────────────────────────────────────
-//  Threshold checks
-//  smile:     smile_ratio >= 3.2  (mouth_w/face_w * 10)
-//  purse:     purse_ratio > 0.8 AND smile_ratio < 2.0 AND open_ratio < 0.030
-//  open:      open_ratio > 0.030
-//  brow:      brow_ratio > 0.34
-//  close_eye: eye_ratio  < 0.014
-// ─────────────────────────────────────────────────────────────
 const FACE_CHECKS = {
-  smile:     r => r.smile_ratio > 5.1,
+  smile:     r => r.smile_ratio > 5.3,
   open:      r => r.open_ratio  >  0.3,
   brow:      r => r.brow_ratio  >  0.34,
   purse:     r => r.purse_ratio >  0.4 && r.smile_ratio < 2.0 && r.open_ratio < 0.030
 }
 
-// debug label สำหรับ HUD
 const FACE_DEBUG = {
-  smile:     { label:"smile_ratio", threshold:"> 5.1"            },
-  open:      { label:"open_ratio",  threshold:"> 0.3"          },
+  smile:     { label:"smile_ratio", threshold:"> 5.3"            },
+  open:      { label:"open_ratio",  threshold:"> 0.3"            },
   brow:      { label:"brow_ratio",  threshold:"> 0.34"           },
   purse:     { label:"purse_ratio", threshold:">0.4 & smile<2.0" }
 }
@@ -1137,6 +960,7 @@ const FACE_DEBUG = {
 //  STATE
 // ═══════════════════════════════════════════════════════
 let currentScene = 0
+let activeScenes = SCENES   // points to SCENES or yt-built scenes
 let isPaused = false
 let faceMesh = null
 let faceCamera = null
@@ -1146,20 +970,135 @@ let roundsDone = 0
 let faceGamePassed = false
 let currentRatios = null
 let lastLandmarks = null
-let faceInFrame = false       // หน้าอยู่ในกรอบ oval หรือเปล่า
-let smileBaseline = null      // ค่า smile ตอนเริ่ม ใช้คำนวณว่า "ยิ้มเพิ่ม"
+let faceInFrame = false
 let TOTAL_VIDEO_SCENES = SCENES.filter(s=>s.type==="video").length
 
+// ── YouTube mode state ──
+let ytMode = false
+let ytPlayer = null
+let ytAPIReady = false
+let ytInterruptTimer = null
+let ytCountdownTick = null
+let ytClips = []         // [{ytId, title, thumb}]
+let ytClipIndex = 0
+let ytLastFGAction = null
+let gameStartedAt = 0
+let gameCompletionReported = false
+
+function reportGameCompleted(mode){
+  if(gameCompletionReported) return
+  gameCompletionReported = true
+  const elapsedMs = gameStartedAt ? Date.now() - gameStartedAt : 0
+  try{
+    window.parent.postMessage({
+      type: "GAME_SESSION_END",
+      completed: true,
+      reps: 1,
+      score: 100,
+      accuracy: 100,
+      rank: "S",
+      mode: mode || (ytMode ? "my-game-youtube" : "my-game"),
+      time_sec: Math.round(elapsedMs / 1000),
+      bombs_hit: 0,
+      walls_hit: 0,
+      miss_count: 0,
+    }, "*")
+  }catch(e){}
+}
+
+// Called by YouTube IFrame API when ready
+function onYouTubeIframeAPIReady(){ ytAPIReady = true }
+
 // ═══════════════════════════════════════════════════════
-//  START
+//  FACE GAME POOL (for random interrupts)
+// ═══════════════════════════════════════════════════════
+const FG_POOL = [
+  { action:"smile",  title:"ยิ้มสิ!",      desc:"ยิ้มให้กว้างที่สุด แล้วค้างไว้",    emoji:"😁", holdSec:3, rounds:5 },
+  { action:"open",   title:"อ้าปากกว้าง!", desc:"อ้าปากให้สุด แล้วค้างไว้",         emoji:"😮", holdSec:3, rounds:5 },
+  { action:"brow",   title:"เลิกคิ้ว!",    desc:"เลิกคิ้วทั้งสองข้างให้สูงที่สุด",  emoji:"🤨", holdSec:3, rounds:5 },
+  { action:"purse",  title:"ทำปากจู๋!",    desc:"ทำปากจู๋ อย่าอ้าปาก แล้วค้างไว้", emoji:"😗", holdSec:3, rounds:5 },
+]
+
+function pickRandomFG(excludeAction){
+  const pool = FG_POOL.filter(f => f.action !== excludeAction)
+  return pool[Math.floor(Math.random() * pool.length)]
+}
+
+// ═══════════════════════════════════════════════════════
+//  YOUTUBE PANEL UI
+// ═══════════════════════════════════════════════════════
+function openYTPanel(){
+  document.getElementById("yt-panel").classList.add("open")
+}
+function closeYTPanel(){
+  document.getElementById("yt-panel").classList.remove("open")
+}
+
+function extractYTId(url){
+  const m = url.match(/(?:v=|youtu\.be\/|\/embed\/|\/shorts\/)([a-zA-Z0-9_-]{11})/)
+  return m ? m[1] : null
+}
+
+async function addYTClip(){
+  const input = document.getElementById("yt-url-input")
+  const url = input.value.trim()
+  if(!url) return
+  const ytId = extractYTId(url)
+  if(!ytId){
+    input.style.borderColor = "var(--accent)"
+    setTimeout(()=>{ input.style.borderColor="" }, 2000)
+    return
+  }
+  if(ytClips.find(c => c.ytId === ytId)){ input.value = ""; return }
+
+  const thumb = `https://img.youtube.com/vi/${ytId}/mqdefault.jpg`
+  let title = `YouTube: ${ytId}`
+  try{
+    const r = await fetch(`https://noembed.com/embed?url=https://www.youtube.com/watch?v=${ytId}`)
+    const d = await r.json()
+    if(d.title) title = d.title
+  }catch(e){}
+
+  ytClips.push({ ytId, title, thumb })
+  input.value = ""
+  renderYTClipList()
+}
+
+function removeYTClip(i){
+  ytClips.splice(i, 1)
+  renderYTClipList()
+}
+
+function renderYTClipList(){
+  const list = document.getElementById("yt-clip-list")
+  const startBtn = document.getElementById("ytp-start-btn")
+  list.innerHTML = ""
+  ytClips.forEach((c, i) => {
+    const row = document.createElement("div")
+    row.className = "yt-clip-row"
+    row.innerHTML = `
+      <img class="yt-clip-thumb" src="${c.thumb}" onerror="this.style.display='none'" alt="">
+      <div class="yt-clip-info">
+        <div class="yt-clip-name">${c.title}</div>
+        <div class="yt-clip-meta">youtube.com/watch?v=${c.ytId}</div>
+      </div>
+      <button class="yt-clip-del" onclick="removeYTClip(${i})">×</button>`
+    list.appendChild(row)
+  })
+  startBtn.style.display = ytClips.length ? "block" : "none"
+}
+
+// ═══════════════════════════════════════════════════════
+//  START — normal mode
 // ═══════════════════════════════════════════════════════
 function startGame(){
-  SCENES = ORIGINAL_SCENES.slice()
-  TOTAL_VIDEO_SCENES = SCENES.filter(s=>s.type==="video").length
   ytMode = false
-  const vid = document.getElementById("game-video")
-  vid.style.display = "block"
-  document.getElementById("yt-wrap").style.display = "none"
+  gameStartedAt = Date.now()
+  gameCompletionReported = false
+  activeScenes = SCENES
+  TOTAL_VIDEO_SCENES = SCENES.filter(s=>s.type==="video").length
+  document.getElementById("game-video").style.display = "block"
+  document.getElementById("yt-player-wrap").style.display = "none"
   const ss = document.getElementById("start-screen")
   ss.style.opacity = "0"
   setTimeout(()=>{
@@ -1170,10 +1109,197 @@ function startGame(){
 }
 
 // ═══════════════════════════════════════════════════════
-//  SHOW SCENE
+//  START — YouTube mode
+// ═══════════════════════════════════════════════════════
+function startYTMode(){
+  if(!ytClips.length) return
+  ytMode = true
+  gameStartedAt = Date.now()
+  gameCompletionReported = false
+  ytClipIndex = 0
+  ytLastFGAction = null
+  closeYTPanel()
+  document.getElementById("game-video").style.display = "none"
+  document.getElementById("yt-player-wrap").style.display = "block"
+  const ss = document.getElementById("start-screen")
+  ss.style.opacity = "0"
+  setTimeout(()=>{
+    ss.style.display = "none"
+    document.getElementById("game-screen").classList.add("active")
+    document.getElementById("scene-label").textContent = `คลิป 1 / ${ytClips.length}`
+    document.getElementById("dialog-box").style.display = "block"
+    document.getElementById("dialog-text").textContent = ytClips[0].title
+    loadYTClip(0)
+  }, 500)
+}
+
+// ── Load a YouTube clip by index ──
+function loadYTClip(index){
+  destroyYTPlayer()
+  ytClipIndex = index
+  const clip = ytClips[index]
+  document.getElementById("scene-label").textContent = `คลิป ${index+1} / ${ytClips.length}`
+  document.getElementById("dialog-text").textContent = clip.title
+
+  const wrap = document.getElementById("yt-player-wrap")
+  wrap.innerHTML = `<div id="yt-iframe-el" style="width:100%;height:100%"></div>`
+
+  const createPlayer = () => {
+    ytPlayer = new YT.Player("yt-iframe-el", {
+      width:"100%", height:"100%",
+      videoId: clip.ytId,
+      playerVars:{ autoplay:1, controls:1, rel:0, modestbranding:1, playsinline:1 },
+      events:{
+        onReady: e => {
+          e.target.playVideo()
+          // countdown tick
+          clearInterval(ytCountdownTick)
+          ytCountdownTick = setInterval(updateYTCountdown, 1000)
+          // schedule first random face game interrupt (45–90 s into video)
+          scheduleYTInterrupt()
+        },
+        onStateChange: e => {
+          if(e.data === YT.PlayerState.ENDED){
+            clearInterval(ytCountdownTick)
+            clearTimeout(ytInterruptTimer)
+            // next clip or finish
+            const nextIdx = index + 1
+            if(nextIdx < ytClips.length){
+              loadYTClip(nextIdx)
+            } else {
+              document.getElementById("countdown-num").textContent = "จบ!"
+              document.getElementById("dialog-text").textContent = "🎉 ดูครบทุกคลิปแล้ว!"
+              reportGameCompleted("my-game-youtube")
+            }
+          }
+        }
+      }
+    })
+  }
+
+  if(ytAPIReady && typeof YT !== "undefined" && YT.Player){
+    createPlayer()
+  } else {
+    const t = setInterval(()=>{
+      if(ytAPIReady && typeof YT !== "undefined" && YT.Player){
+        clearInterval(t); createPlayer()
+      }
+    }, 200)
+  }
+}
+
+function updateYTCountdown(){
+  if(!ytPlayer) return
+  try{
+    const rem = Math.ceil(ytPlayer.getDuration() - ytPlayer.getCurrentTime())
+    if(!isNaN(rem) && rem >= 0)
+      document.getElementById("countdown-num").textContent = fmtSec(rem)
+  }catch(e){}
+}
+
+function fmtSec(s){
+  const m = Math.floor(s/60)
+  const sec = Math.floor(s%60)
+  return m > 0 ? `${m}:${String(sec).padStart(2,"0")}` : `${Math.round(s)}s`
+}
+
+function destroyYTPlayer(){
+  clearInterval(ytCountdownTick)
+  clearTimeout(ytInterruptTimer)
+  if(ytPlayer){ try{ ytPlayer.destroy() }catch(e){} ytPlayer = null }
+  const wrap = document.getElementById("yt-player-wrap")
+  if(wrap) wrap.innerHTML = ""
+}
+
+// ── Schedule a random Face Game interrupt mid-video ──
+function scheduleYTInterrupt(){
+  clearTimeout(ytInterruptTimer)
+  // fire after random 45–90 seconds
+  const delay = (45 + Math.random() * 45) * 1000
+  ytInterruptTimer = setTimeout(fireYTInterrupt, delay)
+}
+
+function fireYTInterrupt(){
+  // Only fire if YT is actually playing
+  if(!ytPlayer) return
+  let state
+  try{ state = ytPlayer.getPlayerState() }catch(e){ return }
+  if(state !== 1){ // 1 = PLAYING
+    // video not playing right now, wait a bit and try again
+    ytInterruptTimer = setTimeout(fireYTInterrupt, 8000)
+    return
+  }
+
+  // Pause the YT video
+  try{ ytPlayer.pauseVideo() }catch(e){}
+  clearInterval(ytCountdownTick)
+
+  // Show a random Face Game
+  const fg = pickRandomFG(ytLastFGAction)
+  ytLastFGAction = fg.action
+
+  // Hide YT wrap, show face overlay
+  document.getElementById("yt-player-wrap").style.display = "none"
+  document.getElementById("dialog-box").style.display = "none"
+  document.getElementById("face-overlay").classList.add("active")
+  initFaceGameYT(fg)
+}
+
+// init face game in YT-interrupt mode (no next scene id — resume YT on pass)
+function initFaceGameYT(fg){
+  document.getElementById("fg-title").textContent = fg.title
+  document.getElementById("fg-desc").textContent = fg.desc
+  document.getElementById("fg-action-text").textContent = fg.title
+  document.getElementById("fg-action-sub").textContent = fg.desc
+  document.getElementById("ring-emoji").textContent = fg.emoji
+  document.getElementById("fg-pass-btn").style.display = "none"
+  document.getElementById("fg-hold-bar").style.width = "0%"
+  document.getElementById("fg-hold-time").textContent = "0.0 / " + fg.holdSec + "s"
+  document.getElementById("fg-status-text").textContent = "รอตรวจจับหน้า…"
+  document.getElementById("fg-dot").className = "fg-dot"
+
+  const track = document.getElementById("fg-score-track")
+  track.innerHTML = ""
+  for(let i=0; i<fg.rounds; i++){
+    const pip = document.createElement("div")
+    pip.className = "score-pip" + (i===0?" current":"")
+    pip.textContent = i+1
+    pip.id = "pip-"+i
+    track.appendChild(pip)
+  }
+
+  // Store current FG config for processFaceGame to reference
+  currentYTFG = fg
+
+  roundsDone = 0
+  holdStart = null
+  faceGamePassed = false
+  faceGameActive = true
+
+  setupFaceMesh()
+}
+
+let currentYTFG = null   // active face game config in YT mode
+
+// Resume YT after passing face game
+function resumeYTAfterFG(){
+  currentYTFG = null
+  document.getElementById("face-overlay").classList.remove("active")
+  document.getElementById("yt-player-wrap").style.display = "block"
+  document.getElementById("dialog-box").style.display = "block"
+  // Resume video
+  try{ ytPlayer.playVideo() }catch(e){}
+  clearInterval(ytCountdownTick)
+  ytCountdownTick = setInterval(updateYTCountdown, 1000)
+  // Schedule next interrupt
+  scheduleYTInterrupt()
+}
+
+// ═══════════════════════════════════════════════════════
+//  SHOW SCENE (normal mode only)
 // ═══════════════════════════════════════════════════════
 function showScene(index){
-  const scene = SCENES[index]
+  const scene = activeScenes[index]
   if(!scene) return
   currentScene = index
   updateProgress()
@@ -1181,35 +1307,29 @@ function showScene(index){
 
   if(scene.type === "video"){
     stopFaceGame()
-    clearTimeout(ytInterruptTimeout)
     document.getElementById("face-overlay").classList.remove("active")
     document.getElementById("dialog-box").style.display = "block"
     document.getElementById("dialog-text").textContent = scene.text
 
-    if(ytMode && scene.ytId){
-      playYTScene(scene)
-    } else {
-      const vid = document.getElementById("game-video")
-      document.getElementById("yt-wrap").style.display = "none"
-      vid.style.display = "block"
-      vid.src = scene.src
-      vid.play().catch(()=>{})
-      vid.onended = ()=>{
-        if(scene.next !== null) showScene(scene.next)
-        else document.getElementById("countdown-num").textContent = "จบ!"
+    const vid = document.getElementById("game-video")
+    vid.src = scene.src
+    vid.play().catch(()=>{})
+
+    vid.onended = ()=>{
+      if(scene.next !== null) showScene(scene.next)
+      else {
+        document.getElementById("countdown-num").textContent = "จบ!"
+        reportGameCompleted("my-game")
       }
-      vid.ontimeupdate = ()=>{
-        const rem = Math.ceil(vid.duration - vid.currentTime)
-        if(!isNaN(rem) && rem >= 0)
-          document.getElementById("countdown-num").textContent = rem + "s"
-      }
+    }
+    vid.ontimeupdate = ()=>{
+      const rem = Math.ceil(vid.duration - vid.currentTime)
+      if(!isNaN(rem) && rem >= 0)
+        document.getElementById("countdown-num").textContent = rem + "s"
     }
   }
 
   if(scene.type === "facegame"){
-    destroyYTPlayer()
-    document.getElementById("yt-wrap").style.display = "none"
-    document.getElementById("game-video").style.display = "block"
     document.getElementById("game-video").pause()
     document.getElementById("dialog-box").style.display = "none"
     document.getElementById("face-overlay").classList.add("active")
@@ -1218,7 +1338,7 @@ function showScene(index){
 }
 
 // ═══════════════════════════════════════════════════════
-//  FACE GAME
+//  FACE GAME (normal scene-based)
 // ═══════════════════════════════════════════════════════
 function initFaceGame(scene){
   document.getElementById("fg-title").textContent = scene.title
@@ -1232,7 +1352,6 @@ function initFaceGame(scene){
   document.getElementById("fg-status-text").textContent = "รอตรวจจับหน้า…"
   document.getElementById("fg-dot").className = "fg-dot"
 
-  // score pips
   const track = document.getElementById("fg-score-track")
   track.innerHTML = ""
   for(let i=0;i<scene.rounds;i++){
@@ -1247,8 +1366,15 @@ function initFaceGame(scene){
   holdStart = null
   faceGamePassed = false
   faceGameActive = true
+  currentYTFG = null  // not a YT interrupt
 
   setupFaceMesh()
+}
+
+// ── Get active face game config (works in both modes) ──
+function getActiveFG(){
+  if(ytMode && currentYTFG) return currentYTFG
+  return activeScenes[currentScene]
 }
 
 function setupFaceMesh(){
@@ -1259,7 +1385,6 @@ function setupFaceMesh(){
   const ctx = canvasEl.getContext("2d")
 
   if(faceMesh){
-    // reuse existing
     document.getElementById("cam-loading").style.display = "none"
     return
   }
@@ -1277,8 +1402,8 @@ function setupFaceMesh(){
     canvasEl.height = videoEl.videoHeight || 195
     ctx.clearRect(0,0,canvasEl.width,canvasEl.height)
 
-    const scene = SCENES[currentScene]
-    const action = scene && scene.type==="facegame" ? scene.action : null
+    const fg = getActiveFG()
+    const action = fg && fg.action ? fg.action : null
 
     if(results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0){
       const lm = results.multiFaceLandmarks[0]
@@ -1293,7 +1418,6 @@ function setupFaceMesh(){
         updateLiveHUD(currentRatios, action)
         if(faceGameActive) processFaceGame(currentRatios)
       } else {
-        // หน้าอยู่นอกกรอบ — ไม่แสดงค่า ไม่นับเวลา
         currentRatios = null
         updateLiveHUD(null, action)
         if(faceGameActive){
@@ -1301,8 +1425,8 @@ function setupFaceMesh(){
           document.getElementById("fg-status-text").textContent = "⚠️ วางหน้าให้อยู่ในกรอบ oval"
           holdStart = null
           document.getElementById("fg-hold-bar").style.width = "0%"
-          const scene = SCENES[currentScene]
-          if(scene) document.getElementById("fg-hold-time").textContent = "0.0 / " + scene.holdSec + "s"
+          const fg2 = getActiveFG()
+          if(fg2) document.getElementById("fg-hold-time").textContent = "0.0 / " + fg2.holdSec + "s"
           document.getElementById("ring-fill").style.strokeDashoffset = 188
           document.getElementById("face-ring").className = "face-ring"
         }
@@ -1335,7 +1459,6 @@ function setupFaceMesh(){
 }
 
 function drawKeyPoints(ctx, lm, w, h){
-  // วาด landmark จุดสำคัญ
   const pts = [LM.UPPER_LIP,LM.LOWER_LIP,LM.MOUTH_L,LM.MOUTH_R,
                LM.L_EYE_TOP,LM.L_EYE_BOT,LM.R_EYE_TOP,LM.R_EYE_BOT,
                LM.L_BROW,LM.R_BROW]
@@ -1348,12 +1471,9 @@ function drawKeyPoints(ctx, lm, w, h){
   })
 }
 
-// debug HUD บน canvas — แสดงค่า ratio real-time เหมือน Python
 function drawDebugHUD(ctx, ratios, action, w, h){
   if(!ratios) return
-  const scene = SCENES[currentScene]
-  if(!scene || scene.type !== "facegame") return
-  const dbg = FACE_DEBUG[action]
+  const dbg = action ? FACE_DEBUG[action] : null
 
   const lines = [
     { key:"smile_ratio", val: ratios.smile_ratio.toFixed(3) },
@@ -1373,7 +1493,6 @@ function drawDebugHUD(ctx, ratios, action, w, h){
     ctx.fillText(`${prefix} ${line.key}: ${line.val}`, 6, 15 + i*16)
   })
 
-  // threshold line
   if(dbg){
     const ok = FACE_CHECKS[action] ? FACE_CHECKS[action](ratios) : false
     ctx.fillStyle = ok ? "rgba(0,200,80,0.7)" : "rgba(255,60,60,0.7)"
@@ -1397,7 +1516,6 @@ function updateLiveHUD(ratios, action){
   const checkFn = action ? FACE_CHECKS[action] : null
   const ok = checkFn ? checkFn(ratios) : false
 
-  // smile_ratio: range 1–5 visually
   const setRow = (barId, valId, value, max, isTarget) => {
     const bar = document.getElementById(barId)
     const val = document.getElementById(valId)
@@ -1420,16 +1538,17 @@ function updateLiveHUD(ratios, action){
 
 function processFaceGame(ratios){
   if(faceGamePassed) return
-  const scene = SCENES[currentScene]
-  const checkFn = FACE_CHECKS[scene.action]
+  const fg = getActiveFG()
+  if(!fg) return
+  const checkFn = FACE_CHECKS[fg.action]
   const ok = checkFn ? checkFn(ratios) : false
 
-  const dot = document.getElementById("fg-dot")
+  const dot       = document.getElementById("fg-dot")
   const statusTxt = document.getElementById("fg-status-text")
-  const holdBar = document.getElementById("fg-hold-bar")
-  const holdTime = document.getElementById("fg-hold-time")
-  const ring = document.getElementById("face-ring")
-  const ringFill = document.getElementById("ring-fill")
+  const holdBar   = document.getElementById("fg-hold-bar")
+  const holdTime  = document.getElementById("fg-hold-time")
+  const ring      = document.getElementById("face-ring")
+  const ringFill  = document.getElementById("ring-fill")
 
   const now = performance.now() / 1000
 
@@ -1440,38 +1559,34 @@ function processFaceGame(ratios){
 
     if(holdStart === null) holdStart = now
     const elapsed = now - holdStart
-    const pct = Math.min(1, elapsed / scene.holdSec)
+    const pct = Math.min(1, elapsed / fg.holdSec)
     holdBar.style.width = (pct*100) + "%"
-    holdTime.textContent = elapsed.toFixed(1) + " / " + scene.holdSec + "s"
-    // ring arc (dashoffset 188 = 0%, 0 = 100%)
+    holdTime.textContent = elapsed.toFixed(1) + " / " + fg.holdSec + "s"
     ringFill.style.strokeDashoffset = 188 - (pct * 188)
 
-    if(elapsed >= scene.holdSec){
+    if(elapsed >= fg.holdSec){
       holdStart = null
       roundsDone++
       document.getElementById("fg-hold-bar").style.width = "0%"
       ringFill.style.strokeDashoffset = 188
 
-      // flash
       const flash = document.getElementById("cam-flash")
       flash.classList.add("show")
       setTimeout(()=>flash.classList.remove("show"), 400)
 
-      // update pip
       const prevPip = document.getElementById("pip-"+(roundsDone-1))
       if(prevPip){ prevPip.className = "score-pip done"; prevPip.textContent = "✓" }
       const nextPip = document.getElementById("pip-"+roundsDone)
       if(nextPip) nextPip.className = "score-pip current"
 
-      if(roundsDone >= scene.rounds){
-        // all rounds done!
+      if(roundsDone >= fg.rounds){
         faceGamePassed = true
         faceGameActive = false
         statusTxt.textContent = "🎉 ผ่านแล้ว!"
         holdTime.textContent = "สำเร็จ!"
         document.getElementById("fg-pass-btn").style.display = "inline-block"
       } else {
-        statusTxt.textContent = "รอบ " + roundsDone + "/" + scene.rounds + " ผ่านแล้ว! ทำต่อ"
+        statusTxt.textContent = "รอบ " + roundsDone + "/" + fg.rounds + " ผ่านแล้ว! ทำต่อ"
       }
     }
   } else {
@@ -1480,7 +1595,7 @@ function processFaceGame(ratios){
     ring.className = "face-ring"
     holdStart = null
     holdBar.style.width = "0%"
-    holdTime.textContent = "0.0 / " + scene.holdSec + "s"
+    holdTime.textContent = "0.0 / " + fg.holdSec + "s"
     ringFill.style.strokeDashoffset = 188
   }
 }
@@ -1490,20 +1605,20 @@ function stopFaceGame(){
 }
 
 function onFaceGamePass(){
-  const scene = SCENES[currentScene]
-  // If next is null, it was a YT interrupt -> resume the YT player
-  if(scene.next === null && ytCurrentScene){
-    resumeYTAfterFaceGame()
-  } else {
-    showScene(scene.next)
+  if(ytMode){
+    // YT interrupt mode → resume video
+    resumeYTAfterFG()
+    return
   }
+  const scene = activeScenes[currentScene]
+  showScene(scene.next)
 }
 
 // ═══════════════════════════════════════════════════════
 //  PROGRESS
 // ═══════════════════════════════════════════════════════
 function updateProgress(){
-  const videoDone = SCENES.slice(0, currentScene).filter(s=>s.type==="video").length
+  const videoDone = activeScenes.slice(0, currentScene).filter(s=>s.type==="video").length
   const pct = TOTAL_VIDEO_SCENES > 0 ? (videoDone / TOTAL_VIDEO_SCENES) * 100 : 0
   document.getElementById("progress-fill").style.width = pct + "%"
 }
@@ -1518,10 +1633,12 @@ function togglePause(){
   isPaused = !isPaused
   if(isPaused){
     vid.pause()
+    if(ytMode && ytPlayer){ try{ ytPlayer.pauseVideo() }catch(e){} }
     ov.classList.add("active")
     btn.textContent = "▶"
   } else {
     vid.play().catch(()=>{})
+    if(ytMode && ytPlayer){ try{ ytPlayer.playVideo() }catch(e){} }
     ov.classList.remove("active")
     btn.textContent = "⏸"
   }
@@ -1529,10 +1646,19 @@ function togglePause(){
 
 function restartGame(){
   stopFaceGame()
+  clearTimeout(ytInterruptTimer)
+  clearInterval(ytCountdownTick)
+  destroyYTPlayer()
   document.getElementById("pause-overlay").classList.remove("active")
   document.getElementById("face-overlay").classList.remove("active")
+  document.getElementById("yt-player-wrap").style.display = "none"
+  document.getElementById("game-video").style.display = "block"
   isPaused = false
   document.getElementById("pause-btn").textContent = "⏸"
+  ytMode = false
+  currentYTFG = null
+  gameStartedAt = 0
+  gameCompletionReported = false
   const ss = document.getElementById("start-screen")
   ss.style.display = "flex"
   ss.style.opacity = "1"
@@ -1546,375 +1672,6 @@ document.addEventListener("keydown", e=>{
   if(e.key === "Escape" && document.getElementById("game-screen").classList.contains("active"))
     togglePause()
 })
-
-// ═══════════════════════════════════════════════
-//  ORIGINAL SCENES ref + state
-// ═══════════════════════════════════════════════
-const ORIGINAL_SCENES = SCENES.slice()
-let ytMode = false
-let ytPlayer = null
-let ytAPIReady = false
-let ytTimeInterval = null
-let customClips = []   // { name, objectURL|null, duration, ytId|null, thumb|null, type:'file'|'yt' }
-
-// ── YT IFrame API callback (called by YouTube script) ──
-function onYouTubeIframeAPIReady(){ ytAPIReady = true }
-
-// ═══════════════════════════════════════════════
-//  MATH INTERVAL ENGINE
-// ═══════════════════════════════════════════════
-const SECONDS_PER_GAME = 20, MIN_GAMES = 1, MAX_GAMES = 5
-
-const FG_POOL = [
-  { action:"smile",  title:"ยิ้มสิ!",       desc:"ยิ้มให้กว้างที่สุด แล้วค้างไว้",    emoji:"😁", holdSec:3, rounds:5 },
-  { action:"open",   title:"อ้าปากกว้าง!",  desc:"อ้าปากให้สุด แล้วค้างไว้",         emoji:"😮", holdSec:3, rounds:5 },
-  { action:"brow",   title:"เลิกคิ้ว!",     desc:"เลิกคิ้วทั้งสองข้างให้สูงที่สุด",  emoji:"🤨", holdSec:3, rounds:5 },
-  { action:"purse",  title:"ทำปากจู๋!",     desc:"ทำปากจู๋ อย่าอ้าปาก แล้วค้างไว้", emoji:"😗", holdSec:3, rounds:5 },
-]
-
-function calcGameCount(d){ return Math.max(MIN_GAMES,Math.min(MAX_GAMES,Math.round(d/SECONDS_PER_GAME))) }
-
-function pickNonConsecutive(count,lastAction=null){
-  const res=[]; let prev=lastAction
-  for(let i=0;i<count;i++){
-    const pool=FG_POOL.filter(f=>f.action!==prev)
-    const pick=pool[Math.floor(Math.random()*pool.length)]
-    res.push(pick); prev=pick.action
-  }
-  return res
-}
-
-function buildScenesFromClips(clips){
-  const scenes=[]; let id=0, lastAction=null
-  for(let i=0;i<clips.length;i++){
-    const c=clips[i], isLast=i===clips.length-1
-    const gameCount=isLast?0:calcGameCount(c.duration)
-    const games=isLast?[]:pickNonConsecutive(gameCount,lastAction)
-    if(games.length) lastAction=games[games.length-1].action
-    scenes.push({ id:id, type:"video",
-      label:`คลิป ${i+1}${isLast?" — จบ":""}`,
-      src:c.objectURL||null, ytId:c.ytId||null,
-      text:c.name, next:isLast?null:id+1 })
-    id++
-    games.forEach((fg,j)=>{
-      const fgId=id++
-      scenes.push({ id:fgId, type:"facegame", label:`Face Challenge`,
-        title:fg.title, desc:fg.desc, action:fg.action, emoji:fg.emoji,
-        holdSec:fg.holdSec, rounds:fg.rounds, next:fgId+1 })
-    })
-  }
-  return scenes
-}
-
-// ═══════════════════════════════════════════════
-//  YOUTUBE PLAYER
-// ═══════════════════════════════════════════════
-// ═══════════════════════════════════════════════
-//  YOUTUBE PLAYER + INTERRUPT FACE GAME SYSTEM
-//  - YT clip plays straight through
-//  - Random timer fires every 45-90s → pause → facegame
-//  - After facegame pass, resumes YT from where it stopped
-// ═══════════════════════════════════════════════
-
-let ytInterruptTimeout = null
-let ytLastAction = null
-let ytCurrentScene = null
-
-const YT_MIN_INTERVAL = 45
-const YT_MAX_INTERVAL = 90
-
-function scheduleNextYTInterrupt(){
-  clearTimeout(ytInterruptTimeout)
-  const delay = (YT_MIN_INTERVAL + Math.random() * (YT_MAX_INTERVAL - YT_MIN_INTERVAL)) * 1000
-  ytInterruptTimeout = setTimeout(triggerYTFaceGame, delay)
-}
-
-function triggerYTFaceGame(){
-  if(!ytPlayer || !ytCurrentScene) return
-  try{
-    const state = ytPlayer.getPlayerState()
-    if(state !== YT.PlayerState.PLAYING){ scheduleNextYTInterrupt(); return }
-    ytPlayer.pauseVideo()
-  }catch(e){ return }
-
-  // Stop the countdown ticker while face game is active
-  clearInterval(ytTimeInterval)
-  document.getElementById("countdown-num").textContent = "🎮"
-
-  const pool = FG_POOL.filter(f => f.action !== ytLastAction)
-  const pick = pool[Math.floor(Math.random() * pool.length)]
-  ytLastAction = pick.action
-
-  const tempFG = {
-    id:9999, type:"facegame", label:"Face Challenge",
-    title:pick.title, desc:pick.desc, action:pick.action,
-    emoji:pick.emoji, holdSec:pick.holdSec, rounds:pick.rounds,
-    next:null
-  }
-  document.getElementById("yt-wrap").style.display = "none"
-  document.getElementById("game-video").style.display = "block"
-  document.getElementById("game-video").pause()
-  document.getElementById("dialog-box").style.display = "none"
-  document.getElementById("face-overlay").classList.add("active")
-  initFaceGame(tempFG)
-}
-
-function resumeYTAfterFaceGame(){
-  clearTimeout(ytInterruptTimeout)
-  document.getElementById("face-overlay").classList.remove("active")
-  document.getElementById("game-video").style.display = "none"
-  document.getElementById("yt-wrap").style.display = "block"
-  document.getElementById("dialog-box").style.display = "block"
-  try{ ytPlayer.playVideo() }catch(e){}
-  // Restart countdown ticker
-  clearInterval(ytTimeInterval)
-  ytTimeInterval = setInterval(()=>{
-    if(!ytPlayer) return
-    try{
-      const rem = Math.ceil(ytPlayer.getDuration() - ytPlayer.getCurrentTime())
-      document.getElementById("countdown-num").textContent = fmt(rem)
-    }catch(e){}
-  },1000)
-  scheduleNextYTInterrupt()
-}
-
-function playYTScene(scene){
-  clearInterval(ytTimeInterval)
-  clearTimeout(ytInterruptTimeout)
-  ytCurrentScene = scene
-  ytLastAction = null
-
-  const wrap = document.getElementById("yt-wrap")
-  document.getElementById("game-video").style.display = "none"
-  wrap.style.display = "block"
-  wrap.innerHTML = `<div id="yt-player-el" style="width:100%;height:100%"></div>`
-
-  const createPlayer = ()=>{
-    ytPlayer = new YT.Player("yt-player-el",{
-      width:"100%", height:"100%",
-      videoId: scene.ytId,
-      playerVars:{ autoplay:1, controls:1, rel:0, modestbranding:1, playsinline:1 },
-      events:{
-        onReady: e => {
-          e.target.playVideo()
-          const dur = e.target.getDuration()
-          document.getElementById("countdown-num").textContent = fmt(dur)
-          ytTimeInterval = setInterval(()=>{
-            if(!ytPlayer) return
-            try{
-              const rem = Math.ceil(ytPlayer.getDuration() - ytPlayer.getCurrentTime())
-              document.getElementById("countdown-num").textContent = fmt(rem)
-            }catch(e){}
-          },1000)
-          const firstDelay = Math.min(45 + Math.random()*45, Math.max(30, dur-60)) * 1000
-          ytInterruptTimeout = setTimeout(triggerYTFaceGame, firstDelay)
-        },
-        onStateChange: e => {
-          if(e.data === YT.PlayerState.ENDED){
-            clearInterval(ytTimeInterval)
-            clearTimeout(ytInterruptTimeout)
-            if(scene.next !== null) showScene(scene.next)
-            else document.getElementById("countdown-num").textContent = "จบ!"
-          }
-        }
-      }
-    })
-  }
-
-  if(ytAPIReady && typeof YT !== 'undefined' && YT.Player) createPlayer()
-  else { const t=setInterval(()=>{ if(ytAPIReady&&typeof YT!=='undefined'&&YT.Player){ clearInterval(t); createPlayer() }},200) }
-}
-
-function destroyYTPlayer(){
-  clearInterval(ytTimeInterval)
-  clearTimeout(ytInterruptTimeout)
-  ytCurrentScene = null
-  if(ytPlayer){ try{ ytPlayer.destroy() }catch(e){} ytPlayer=null }
-  const wrap = document.getElementById("yt-wrap")
-  if(wrap) wrap.innerHTML=""
-}
-
-
-// ═══════════════════════════════════════════════
-//  UPLOAD PANEL UI
-// ═══════════════════════════════════════════════
-function openClipPanel(){ document.getElementById("clip-panel").classList.add("open") }
-function closeClipPanel(){ document.getElementById("clip-panel").classList.remove("open") }
-
-function switchTab(tab){
-  document.getElementById("cp-pane-file").style.display = tab==="file"?"block":"none"
-  document.getElementById("cp-pane-yt").style.display   = tab==="yt"  ?"block":"none"
-  document.getElementById("tab-file").className = "cp-tab"+(tab==="file"?" active":"")
-  document.getElementById("tab-yt").className   = "cp-tab"+(tab==="yt"  ?" active":"")
-}
-
-function fmt(sec){ const m=Math.floor(sec/60),s=Math.floor(sec%60); return m>0?`${m}:${String(s).padStart(2,"0")}`:`${Math.round(sec)}s` }
-
-function getVideoDuration(file){
-  return new Promise(resolve=>{
-    const url=URL.createObjectURL(file)
-    const v=document.createElement("video"); v.preload="metadata"
-    v.onloadedmetadata=()=>{ URL.revokeObjectURL(url); resolve(isFinite(v.duration)&&v.duration>0?v.duration:30) }
-    v.onerror=()=>{ URL.revokeObjectURL(url); resolve(30) }
-    v.src=url
-  })
-}
-
-async function handleClipUpload(input){
-  for(const f of Array.from(input.files)){
-    if(!f.type.startsWith("video/")) continue
-    const dur = await getVideoDuration(f)
-    customClips.push({ name:f.name, objectURL:URL.createObjectURL(f), duration:dur, type:"file" })
-  }
-  input.value=""
-  renderClipList()
-}
-
-// ── YouTube URL utils ──
-function extractYTId(url){
-  const m = url.match(/(?:v=|youtu\.be\/|\/embed\/|\/shorts\/)([a-zA-Z0-9_-]{11})/)
-  return m ? m[1] : null
-}
-
-async function getYTDuration(ytId){
-  // Try oEmbed to get title; duration needs noembed or just default 0 (unknown)
-  // We'll use a reliable trick: load the thumbnail to confirm the ID is valid,
-  // and set duration=180 as safe fallback (3 min → 2 games)
-  return new Promise(resolve=>{
-    const img=new Image()
-    img.onload=()=>resolve(null)   // null = unknown, use fallback
-    img.onerror=()=>resolve(null)
-    img.src=`https://img.youtube.com/vi/${ytId}/0.jpg`
-    setTimeout(()=>resolve(null),4000)
-  })
-}
-
-async function addYTClip(){
-  const input=document.getElementById("yt-url-input")
-  const url=input.value.trim()
-  if(!url) return
-  const ytId=extractYTId(url)
-  if(!ytId){ input.style.borderColor="var(--accent)"; setTimeout(()=>input.style.borderColor="",2000); return }
-
-  // Check duplicate
-  if(customClips.find(c=>c.ytId===ytId)){ input.value=""; return }
-
-  input.value=""
-  input.placeholder="กำลังโหลดข้อมูล…"
-
-  // Try to get title via noembed
-  let title=`YouTube: ${ytId}`, duration=300
-  try{
-    const r=await fetch(`https://noembed.com/embed?url=https://www.youtube.com/watch?v=${ytId}`)
-    const d=await r.json()
-    if(d.title) title=d.title
-  }catch(e){}
-
-  customClips.push({ name:title, objectURL:null, duration:duration, ytId:ytId,
-    thumb:`https://img.youtube.com/vi/${ytId}/mqdefault.jpg`, type:"yt" })
-  input.placeholder="วาง YouTube URL เช่น https://youtu.be/xxxxx"
-  renderClipList()
-}
-
-function renderClipList(){
-  const list=document.getElementById("cp-list")
-  const math=document.getElementById("cp-math")
-  const startBtn=document.getElementById("cp-start-btn")
-  const clearBtn=document.getElementById("cp-clear-btn")
-  const badge=document.getElementById("clip-badge")
-  const scbBadge=badge
-
-  list.innerHTML=""
-  if(!customClips.length){
-    math.style.display="none"
-    startBtn.style.display="none"
-    clearBtn.style.display="none"
-    scbBadge.style.display="none"
-    return
-  }
-  scbBadge.style.display="inline"
-  scbBadge.textContent=customClips.length
-
-  let totalGames=0
-  customClips.forEach((c,i)=>{
-    const isLast=i===customClips.length-1
-    const n=isLast?0:calcGameCount(c.duration)
-    totalGames+=n
-    const row=document.createElement("div"); row.className="cp-row"
-    const thumbHTML = c.thumb
-      ? `<img class="cp-thumb" src="${c.thumb}" alt="">`
-      : `<div class="cp-num">${i+1}</div>`
-    const durInfo = c.type==="yt"
-      ? `YouTube · ${isLast?"ซีนจบ":`~<b>${n}</b> เกม`}`
-      : `${fmt(c.duration)} · ${isLast?"ซีนจบ":`<b>${n}</b> เกม`}`
-    row.innerHTML=`
-      ${thumbHTML}
-      <div class="cp-info">
-        <div class="cp-name">${c.name}</div>
-        <div class="cp-meta">${durInfo}</div>
-      </div>
-      <button class="cp-del" onclick="removeClip(${i})">×</button>`
-    list.appendChild(row)
-  })
-
-  const ytCount=customClips.filter(c=>c.type==="yt").length
-  math.style.display="block"
-  math.innerHTML=`สูตร: n = clamp(round(D÷${SECONDS_PER_GAME}), ${MIN_GAMES}, ${MAX_GAMES})<br>`
-    + customClips.map((c,i)=>{
-        if(i===customClips.length-1) return `[${i+1}] ซีนจบ`
-        const n=calcGameCount(c.duration)
-        const dur=c.type==="yt"?`~${c.duration}s`:`${Math.round(c.duration)}s`
-        return `[${i+1}] ${dur} → <b>${n}</b> Face Game`
-      }).join(" · ")
-    + `<br>รวม <b>${customClips.length}</b> คลิป · <b>${totalGames}</b> Face Games`
-    + (ytCount?`<br><span style="color:rgba(255,200,0,.6)">⚠ YouTube ต้องรันบน web server (ไม่ใช่ file://)</span>`:"")
-
-  startBtn.style.display="block"
-  clearBtn.style.display="block"
-}
-
-function removeClip(i){
-  if(customClips[i].objectURL) URL.revokeObjectURL(customClips[i].objectURL)
-  customClips.splice(i,1)
-  renderClipList()
-}
-
-function clearClips(){
-  customClips.forEach(c=>{ if(c.objectURL) URL.revokeObjectURL(c.objectURL) })
-  customClips=[]
-  renderClipList()
-}
-
-function startWithCustomClips(){
-  if(!customClips.length) return
-  closeClipPanel()
-  ytMode = customClips.some(c=>c.type==="yt")
-  SCENES = buildScenesFromClips(customClips)
-  TOTAL_VIDEO_SCENES = SCENES.filter(s=>s.type==="video").length
-  const ss=document.getElementById("start-screen")
-  ss.style.opacity="0"
-  setTimeout(()=>{
-    ss.style.display="none"
-    document.getElementById("game-screen").classList.add("active")
-    showScene(0)
-  },500)
-}
-
-// Drag-and-drop on file drop zone
-;(function(){
-  const zone=document.getElementById("cp-drop")
-  if(!zone) return
-  zone.addEventListener("dragover",e=>{e.preventDefault();zone.classList.add("drag")})
-  zone.addEventListener("dragleave",()=>zone.classList.remove("drag"))
-  zone.addEventListener("drop",e=>{
-    e.preventDefault(); zone.classList.remove("drag")
-    const inp=document.getElementById("cp-file-input")
-    const dt=new DataTransfer()
-    Array.from(e.dataTransfer.files).forEach(f=>dt.items.add(f))
-    inp.files=dt.files; handleClipUpload(inp)
-  })
-})()
-
 </script>
 </body>
 </html>

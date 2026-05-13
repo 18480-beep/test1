@@ -10,6 +10,29 @@ interface ECGPulseProps {
   activeScene: number;
 }
 
+const ECG_COLOR_CYCLE_ENABLED = true;
+const ECG_COLOR_CYCLE_MS = 3000;
+const ECG_COLOR_CYCLE = ["#0019fe", "#ff7a00", "#01f35e", "#ea00ff"];
+
+function hexToRgb(hex: string) {
+  const clean = hex.replace("#", "");
+  const value = parseInt(clean, 16);
+  return {
+    r: (value >> 16) & 255,
+    g: (value >> 8) & 255,
+    b: value & 255,
+  };
+}
+
+function mixHex(a: string, b: string, t: number) {
+  const ca = hexToRgb(a);
+  const cb = hexToRgb(b);
+  const r = Math.round(ca.r + (cb.r - ca.r) * t);
+  const g = Math.round(ca.g + (cb.g - ca.g) * t);
+  const bl = Math.round(ca.b + (cb.b - ca.b) * t);
+  return `#${[r, g, bl].map((v) => v.toString(16).padStart(2, "0")).join("")}`;
+}
+
 export default function ECGPulse({ activeScene }: ECGPulseProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animRef = useRef<number>(0);
@@ -29,12 +52,23 @@ export default function ECGPulse({ activeScene }: ECGPulseProps) {
     resize();
     window.addEventListener("resize", resize);
 
-    const getColor = () => {
-      if (activeScene <= 2) return "#00D4AA";
+    const getSceneColor = () => {
+      if (activeScene <= 2) return "#fe1900";
       if (activeScene === 3) return "#FF2020";
       if (activeScene === 4) return "#FF6B00";
       if (activeScene === 5) return "#FF0040";
       return "#00D4AA";
+    };
+
+    const getColor = () => {
+      if (!ECG_COLOR_CYCLE_ENABLED) return getSceneColor();
+
+      const now = performance.now();
+      const cycleIndex = Math.floor(now / ECG_COLOR_CYCLE_MS) % ECG_COLOR_CYCLE.length;
+      const nextIndex = (cycleIndex + 1) % ECG_COLOR_CYCLE.length;
+      const rawT = (now % ECG_COLOR_CYCLE_MS) / ECG_COLOR_CYCLE_MS;
+      const smoothT = rawT * rawT * (3 - 2 * rawT);
+      return mixHex(ECG_COLOR_CYCLE[cycleIndex], ECG_COLOR_CYCLE[nextIndex], smoothT);
     };
 
     const getSpeed = () => {

@@ -9,7 +9,7 @@ export default function AccessibleControlPanel() {
   const toggleTheme = themeContext?.toggleTheme;
   const [audioEnabled, setAudioEnabled] = useState(true);
   const { sidebarWidth } = useBreakpoint();
-  const leftOffset = sidebarWidth + 16;
+  const leftOffset = sidebarWidth - 200;
 
   const handleThemeToggle = () => {
     console.log("Theme toggle clicked, current theme:", theme);

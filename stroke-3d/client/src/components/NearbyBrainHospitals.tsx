@@ -1,16 +1,6 @@
-/*
- * NearbyBrainHospitals.tsx — v5 (Readable Edition)
- * ✅ แผนที่สูงขึ้นมาก (clamp 320px–480px)
- * ✅ ตัวหนังสือทุกอันใหญ่ขึ้น อ่านออกชัด
- * ✅ การ์ดโรงพยาบาลกว้างขึ้น ข้อความชัด
- * ✅ ปรับขนาดได้ผ่าน --text-scale
- * ✅ Detail panel ชัดขึ้น
- */
-
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTheme } from "@/contexts/ThemeContext";
 
-/* ── Types ───────────────────────────────────────────── */
 interface RealHospital {
   id: number;
   name: string;
@@ -24,449 +14,429 @@ interface RealHospital {
   amenity: string;
 }
 
-declare global { interface Window { L: any; } }
+declare global {
+  interface Window {
+    L: any;
+  }
+}
 
-/* ── Utils ───────────────────────────────────────────── */
 function calcDist(la1: number, ln1: number, la2: number, ln2: number) {
-  const R = 6371, dLa = (la2-la1)*Math.PI/180, dLn = (ln2-ln1)*Math.PI/180;
-  const a = Math.sin(dLa/2)**2 + Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.sin(dLn/2)**2;
-  return +(R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))).toFixed(1);
+  const R = 6371;
+  const dLa = ((la2 - la1) * Math.PI) / 180;
+  const dLn = ((ln2 - ln1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLa / 2) ** 2 +
+    Math.cos((la1 * Math.PI) / 180) * Math.cos((la2 * Math.PI) / 180) * Math.sin(dLn / 2) ** 2;
+  return +(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))).toFixed(1);
 }
 
-function resolveType(tags: Record<string,string>): { label: string; color: string } {
-  const ot = (tags["operator:type"] ?? "").toLowerCase();
-  const gov = (tags["government"] ?? "").toLowerCase();
-  const amenity = (tags["amenity"] ?? "").toLowerCase();
-  const operator = (tags["operator"] ?? "").toLowerCase();
+function resolveType(tags: Record<string, string>) {
+  const operatorType = (tags["operator:type"] ?? "").toLowerCase();
+  const gov = (tags.government ?? "").toLowerCase();
+  const amenity = (tags.amenity ?? "").toLowerCase();
+  const operator = (tags.operator ?? "").toLowerCase();
 
-  if (ot === "public" || gov || operator.includes("กระทรวง") || operator.includes("สาธารณสุข"))
+  if (operatorType === "public" || gov || operator.includes("กระทรวง") || operator.includes("สาธารณสุข")) {
     return { label: "รัฐ", color: "#4d9fff" };
-  if (ot === "private" || amenity === "clinic" || operator.includes("เอกชน"))
+  }
+  if (operatorType === "private" || amenity === "clinic" || operator.includes("เอกชน")) {
     return { label: amenity === "clinic" ? "คลินิก" : "เอกชน", color: "#ffc94d" };
-  if (amenity === "clinic")
+  }
+  if (amenity === "clinic") {
     return { label: "คลินิก", color: "#ffc94d" };
-  return { label: "—", color: "#4d6a8a" };
+  }
+  return { label: "-", color: "#4d6a8a" };
 }
 
-function resolvePhone(tags: Record<string,string>): string {
-  return tags["phone"] ?? tags["contact:phone"] ?? tags["contact:mobile"] ?? tags["mobile"] ?? "";
+function resolvePhone(tags: Record<string, string>) {
+  return tags.phone ?? tags["contact:phone"] ?? tags["contact:mobile"] ?? tags.mobile ?? "";
 }
 
-/* ── Leaflet loader ──────────────────────────────────── */
-let leafletLoaded = false;
+let leafletReady = false;
 function loadLeaflet(): Promise<void> {
-  return new Promise(resolve => {
-    if (leafletLoaded && window.L) { resolve(); return; }
+  return new Promise((ok) => {
+    if (leafletReady && window.L) { ok(); return; }
     if (!document.getElementById("lf-css")) {
-      const l = document.createElement("link");
-      l.id="lf-css"; l.rel="stylesheet";
-      l.href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
-      document.head.appendChild(l);
+      const link = document.createElement("link");
+      link.id = "lf-css"; link.rel = "stylesheet";
+      link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+      document.head.appendChild(link);
     }
     if (document.getElementById("lf-js")) {
-      const poll = setInterval(()=>{ if(window.L){ clearInterval(poll); leafletLoaded=true; resolve(); }},80);
+      const poll = setInterval(() => { if (window.L) { clearInterval(poll); leafletReady = true; ok(); } }, 80);
       return;
     }
-    const s = document.createElement("script");
-    s.id="lf-js"; s.src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
-    s.onload=()=>{ leafletLoaded=true; resolve(); };
-    document.head.appendChild(s);
+    const script = document.createElement("script");
+    script.id = "lf-js";
+    script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+    script.onload = () => { leafletReady = true; ok(); };
+    document.head.appendChild(script);
   });
 }
 
-/* ── Overpass API ────────────────────────────────────── */
 async function fetchHospitals(lat: number, lng: number): Promise<RealHospital[]> {
-  const q = `[out:json][timeout:25];
-(
-  node["amenity"~"^(hospital|clinic)$"]["name"](around:6000,${lat},${lng});
-  way["amenity"~"^(hospital|clinic)$"]["name"](around:6000,${lat},${lng});
-  relation["amenity"~"^(hospital|clinic)$"]["name"](around:6000,${lat},${lng});
-);
-out center tags 25;`;
+  // Cache check
+  const cacheKey = `hosp_${lat.toFixed(3)}_${lng.toFixed(3)}`;
+  try {
+    const cached = sessionStorage.getItem(cacheKey);
+    if (cached) return JSON.parse(cached);
+  } catch {}
 
-  const res = await fetch("https://overpass-api.de/api/interpreter",{method:"POST",body:q});
+  const query = `[out:json][timeout:15];
+(
+  node["amenity"~"^(hospital|clinic)$"]["name"](around:10000,${lat},${lng});
+  way["amenity"~"^(hospital|clinic)$"]["name"](around:10000,${lat},${lng});
+  relation["amenity"~"^(hospital|clinic)$"]["name"](around:10000,${lat},${lng});
+);
+out center tags 20;`;
+
+  const doFetch = () => Promise.any([
+    fetch("https://overpass-api.de/api/interpreter", { method: "POST", body: query }),
+    fetch("https://overpass.kumi.systems/api/interpreter", { method: "POST", body: query }),
+  ]);
+
+  let res: Response;
+  try {
+    res = await doFetch();
+  } catch {
+    await new Promise((r) => setTimeout(r, 500));
+    res = await doFetch();
+  }
+
+  if (!res.ok) throw new Error(`Overpass HTTP ${res.status}`);
   const json = await res.json();
 
-  return (json.elements as any[])
-    .filter(el => el.tags?.name)
-    .map(el => {
-      const hLat = el.lat ?? el.center?.lat ?? lat;
-      const hLng = el.lon ?? el.center?.lon ?? lng;
-      const tags: Record<string,string> = el.tags ?? {};
+  const list = (json.elements as any[])
+    .filter((item) => item.tags?.name)
+    .map((item) => {
+      const hLat = item.lat ?? item.center?.lat ?? lat;
+      const hLng = item.lon ?? item.center?.lon ?? lng;
+      const tags: Record<string, string> = item.tags ?? {};
       const { label, color } = resolveType(tags);
       return {
-        id: el.id,
+        id: item.id,
         name: tags.name,
-        lat: hLat, lng: hLng,
-        dist: calcDist(lat, lng, hLat, hLng),
+        lat: hLat,
+        lng: hLng,
+        dist: +(calcDist(lat, lng, hLat, hLng) * 1.4).toFixed(1),
         phone: resolvePhone(tags),
-        typeLabel: label, typeColor: color,
-        emergency: tags.emergency === "yes" || tags["emergency_service"] === "yes",
+        typeLabel: label,
+        typeColor: color,
+        emergency: tags.emergency === "yes" || tags["opening_hours:emergency"] === "24/7",
         amenity: tags.amenity ?? "hospital",
       } as RealHospital;
     })
-    .sort((a,b) => a.dist - b.dist)
-    .slice(0,12);
+    .sort((a, b) => a.dist - b.dist)
+    .slice(0, 20);
+
+  try { sessionStorage.setItem(cacheKey, JSON.stringify(list)); } catch {}
+  return list;
 }
 
-/* ── Leaflet popup global style ─────────── */
-let styleInjected = false;
-function injectMapStyle() {
-  if (styleInjected) return; styleInjected = true;
-  const s = document.createElement("style");
-  s.textContent = `
-    .dp .leaflet-popup-content-wrapper{background:transparent!important;box-shadow:none!important;padding:0!important;border:none!important}
-    .dp .leaflet-popup-content{margin:0!important}
-    .dp .leaflet-popup-tip{background:#0a101e!important}
-    .leaflet-control-zoom a{background:#0a101e!important;color:#8aa0c0!important;border-color:rgba(255,255,255,.1)!important;font-size:18px!important;width:36px!important;height:36px!important;line-height:36px!important}
-    .leaflet-control-zoom a:hover{color:#d0e4ff!important}
-    .leaflet-container{font-family:inherit;font-size:16px!important}
-    .leaflet-container *{font-size:inherit}
+let cssInjected = false;
+function injectCSS() {
+  if (cssInjected) return;
+  cssInjected = true;
+  const style = document.createElement("style");
+  style.textContent = `
+    .nbh-pop .leaflet-popup-content-wrapper {
+      background: rgba(6,16,36,0.97) !important;
+      border: 1px solid rgba(32,220,200,0.30) !important;
+      box-shadow: 0 16px 48px rgba(0,0,0,.75), 0 0 28px rgba(32,220,200,.10) !important;
+      border-radius: 16px !important; padding: 0 !important;
+    }
+    .nbh-pop .leaflet-popup-content { margin: 0 !important; }
+    .nbh-pop .leaflet-popup-tip { background: rgba(6,16,36,0.97) !important; }
+    .nbh-pop .leaflet-popup-close-button { color: rgba(104,200,255,.45) !important; font-size: 18px !important; top: 10px !important; right: 10px !important; padding: 0 !important; }
+    .leaflet-control-zoom { border: none !important; margin-right: 16px !important; margin-top: 16px !important; display: flex !important; flex-direction: column !important; gap: 4px !important; }
+    .leaflet-control-zoom a { background: rgba(6,16,34,0.92) !important; color: rgba(104,200,255,.75) !important; border: 1px solid rgba(32,160,200,0.20) !important; font-size: 18px !important; width: 40px !important; height: 40px !important; line-height: 40px !important; border-radius: 10px !important; }
+    .leaflet-control-zoom a:hover { background: rgba(32,200,220,0.14) !important; color: #68f6ff !important; }
+    .leaflet-control-attribution { display: none !important; }
+    .nbh-mapwrap .leaflet-tile-pane { filter: brightness(0.7) saturate(0.56) hue-rotate(198deg); background: #020810; }
+    .nbh-mapwrap .leaflet-tile { background: #020810; }
+    @keyframes nbh-spin { to { transform: rotate(360deg) } }
+    @keyframes nbh-ripple { 0% { transform: scale(0.8); opacity: .6 } 100% { transform: scale(2.6); opacity: 0 } }
+    @keyframes nbh-glow { 0%,100% { box-shadow: 0 0 18px rgba(32,220,200,.8), 0 4px 16px rgba(0,0,0,.5) } 50% { box-shadow: 0 0 30px rgba(32,220,200,1), 0 4px 16px rgba(0,0,0,.5) } }
   `;
-  document.head.appendChild(s);
+  document.head.appendChild(style);
 }
 
-/* ═══════════════════════════════════════════════════════ */
 export default function NearbyBrainHospitals() {
-  const [phase, setPhase]         = useState<"idle"|"gps"|"fetch"|"map"|"done"|"error">("idle");
+  const [phase, setPhase] = useState<"idle" | "gps" | "fetch" | "map" | "done" | "error">("idle");
   const { textScale } = useTheme();
-  const [userLat, setUserLat]     = useState<number>(13.756);
-  const [userLng, setUserLng]     = useState<number>(100.502);
+  const [userLat, setUserLat] = useState<number | null>(null);
+  const [userLng, setUserLng] = useState<number | null>(null);
   const [hospitals, setHospitals] = useState<RealHospital[]>([]);
-  const [selId, setSelId]         = useState<number|null>(null);
-  const [errMsg, setErrMsg]       = useState("");
-  const mapDiv  = useRef<HTMLDivElement>(null);
-  const mapRef  = useRef<any>(null);
-  const markers = useRef<{id:number;m:any}[]>([]);
-  const userM   = useRef<any>(null);
+  const [selId, setSelId] = useState<number | null>(null);
+  const [errMsg, setErrMsg] = useState("");
+  const [gpsAccuracy, setGpsAccuracy] = useState<number | null>(null);
+  const mapDiv = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<any>(null);
+  const markers = useRef<{ id: number; m: any }[]>([]);
+  const userMarkerRef = useRef<any>(null);
+  const mapMinHeight = 310;
 
-  useEffect(()=>{ init(); },[]);
+  // โหลด Leaflet + CSS ล่วงหน้าทันทีที่ mount
+  useEffect(() => {
+    loadLeaflet();
+    injectCSS();
+  }, []);
 
-  const init = useCallback(async()=>{
-    setPhase("gps"); setErrMsg("");
+  const init = useCallback(async () => {
+    setPhase("gps");
+    setErrMsg("");
+    setGpsAccuracy(null);
 
-    let lat=13.756, lng=100.502;
+    let lat: number;
+    let lng: number;
+
     try {
-      const pos = await new Promise<GeolocationPosition>((ok,fail)=>
-        navigator.geolocation.getCurrentPosition(ok,fail,{timeout:10000,maximumAge:60000}));
-      lat=pos.coords.latitude; lng=pos.coords.longitude;
-    } catch { /* fallback BKK */ }
-    setUserLat(lat); setUserLng(lng);
+      const pos = await new Promise<GeolocationPosition>((ok, fail) =>
+        navigator.geolocation.getCurrentPosition(ok, fail, { timeout: 12000, maximumAge: 30000, enableHighAccuracy: true }),
+      );
+      lat = pos.coords.latitude;
+      lng = pos.coords.longitude;
+      setGpsAccuracy(Math.round(pos.coords.accuracy));
+    } catch (gpsErr: any) {
+      const isDenied = gpsErr?.code === 1;
+      const msg = isDenied
+        ? "GPS ถูกปิดอยู่ กรุณาอนุญาต Location แล้วลองใหม่"
+        : "ระบุตำแหน่ง GPS ไม่ได้ กรุณาลองใหม่";
+      setErrMsg(msg);
+      setPhase("error");
+      return;
+    }
 
+    setUserLat(lat);
+    setUserLng(lng);
     setPhase("fetch");
+
     let list: RealHospital[] = [];
     try {
       list = await fetchHospitals(lat, lng);
-      setHospitals(list);
-      if (list.length) setSelId(list[0].id);
     } catch {
-      setErrMsg("ดึงข้อมูลไม่ได้ — ตรวจสอบอินเทอร์เน็ต");
-      setPhase("error"); return;
+      setErrMsg("โหลดข้อมูลโรงพยาบาลไม่ได้ กรุณาลองใหม่");
+      setPhase("error");
+      return;
     }
 
+    if (list.length === 0) {
+      setErrMsg("ไม่พบโรงพยาบาลหรือคลินิกในรัศมี 10 กม. ลองขยับตำแหน่งแล้วรีเฟรช");
+      setPhase("error");
+      return;
+    }
+
+    setHospitals(list);
+    setSelId(list[0].id);
     setPhase("map");
-    await loadLeaflet();
-    injectMapStyle();
+    await loadLeaflet(); // จะ resolve ทันทีถ้าโหลดไปแล้ว
+    injectCSS();
     setPhase("done");
-  },[]);
+  }, []);
 
-  /* ── build map ── */
-  useEffect(()=>{
-    if (phase!=="done"||!mapDiv.current||!window.L) return;
+  useEffect(() => { init(); }, [init]);
+
+  useEffect(() => {
+    if (phase !== "done" || !mapDiv.current || !window.L || userLat === null || userLng === null) return;
     const L = window.L;
-    if (mapRef.current){ mapRef.current.remove(); mapRef.current=null; }
+    if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; }
 
-    mapDiv.current.style.height = "220px";
-    mapDiv.current.style.width  = "100%";
-
-    const map = L.map(mapDiv.current,{zoomControl:false,attributionControl:false})
-      .setView([userLat,userLng],15);
-
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",{maxZoom:19}).addTo(map);
-    L.control.zoom({position:"topright"}).addTo(map);
+    const map = L.map(mapDiv.current, { zoomControl: false, attributionControl: false }).setView([userLat, userLng], 14);
+    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", { maxZoom: 19 }).addTo(map);
+    L.control.zoom({ position: "topright" }).addTo(map);
     mapRef.current = map;
 
-    const userIcon = L.divIcon({
-      className:"", iconSize:[24,24], iconAnchor:[12,12],
-      html:`<div style="width:24px;height:24px;border-radius:50%;background:#ff5252;border:3px solid rgba(255,82,82,0.35);box-shadow:0 0 18px rgba(255,82,82,.9);"></div>`
-    });
-    userM.current = L.marker([userLat,userLng],{icon:userIcon,zIndexOffset:1000})
-      .addTo(map)
-      .bindPopup(`<div style="font-family:monospace;font-size:13px;color:#fff;background:#0a101e;padding:8px 13px;border-radius:10px;border:1px solid rgba(255,82,82,0.3)">📍 ตำแหน่งของคุณ</div>`,{className:"dp"});
-
-    markers.current = hospitals.map(h=>{
-      const icon = L.divIcon({
-        className:"", iconSize:[34,34], iconAnchor:[17,17],
-        html:`<div style="width:34px;height:34px;border-radius:50%;background:#0d1628;border:2px solid #4d9fff;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 0 12px rgba(77,159,255,.6);cursor:pointer">🏥</div>`
-      });
-      const popup = `<div style="font-family:monospace;font-size:13px;color:#d0e4ff;background:#0a101e;padding:13px 16px;border-radius:12px;border:1px solid rgba(77,159,255,.25);min-width:220px;line-height:1.8">
-        <div style="font-weight:700;color:#fff;margin-bottom:5px;font-size:14px">${h.name}</div>
-        <div style="color:#8aa0c0;margin-bottom:4px">📍 ${h.dist} กม.</div>
-        ${h.typeLabel!=="—"?`<div style="color:${h.typeColor};font-size:12px;margin-bottom:3px">${h.typeLabel}</div>`:""}
-        ${h.phone?`<a href="tel:${h.phone}" style="color:#00d4aa;text-decoration:none;display:block;margin-top:5px;font-size:13px">📞 ${h.phone}</a>`:""}
-        <a href="https://www.google.com/maps/dir/?api=1&destination=${h.lat},${h.lng}" target="_blank"
-          style="display:block;margin-top:10px;padding:7px 12px;background:rgba(77,159,255,.15);border:1px solid rgba(77,159,255,.3);border-radius:8px;color:#4d9fff;text-decoration:none;text-align:center;font-size:13px">
-          🗺 นำทาง Google Maps
-        </a>
+    const pinHtml = `
+      <div style="position:relative;width:52px;height:62px;pointer-events:none;">
+        <div style="position:absolute;top:6px;left:5px;width:42px;height:42px;border-radius:50%;border:2px solid rgba(32,220,195,0.55);animation:nbh-ripple 2.2s ease-out infinite;"></div>
+        <div style="position:absolute;top:6px;left:5px;width:42px;height:42px;border-radius:50%;border:2px solid rgba(32,220,195,0.35);animation:nbh-ripple 2.2s ease-out infinite;animation-delay:.75s;"></div>
+        <div style="position:absolute;top:2px;left:50%;transform:translateX(-50%) rotate(45deg);width:40px;height:40px;border-radius:6px 50% 6px 50%;background:linear-gradient(135deg,#18d8c0,#0bb8e8);border:2.5px solid rgba(255,255,255,0.30);box-shadow:0 0 20px rgba(24,220,192,.95),0 4px 14px rgba(0,0,0,.55);animation:nbh-glow 2.5s ease-in-out infinite;display:flex;align-items:center;justify-content:center;">
+          <div style="transform:rotate(-45deg)">
+            <svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='white'><circle cx='12' cy='7' r='4'/><path d='M4 20c0-4 3.6-7 8-7s8 3 8 7' stroke='white' stroke-width='0' fill='white'/></svg>
+          </div>
+        </div>
+        <div style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:16px;height:5px;border-radius:50%;background:rgba(0,0,0,.38);filter:blur(3px);"></div>
       </div>`;
-      const m = L.marker([h.lat,h.lng],{icon})
+
+    userMarkerRef.current = L.marker([userLat, userLng], {
+      icon: L.divIcon({ className: "", iconSize: [52, 62], iconAnchor: [26, 58], popupAnchor: [0, -56], html: pinHtml }),
+      zIndexOffset: 2000,
+    }).addTo(map).bindPopup(
+      `<div style="padding:16px 18px;font-family:'Sarabun',sans-serif;">
+        <div style="font-weight:700;font-size:17px;color:#fff">📍 ตำแหน่งของคุณ</div>
+        ${gpsAccuracy !== null ? `<div style="font-size:13px;color:#4d9fff;margin-top:4px;font-family:monospace;">ความแม่นยำ ~${gpsAccuracy}m</div>` : ""}
+      </div>`,
+      { className: "nbh-pop" },
+    );
+
+    markers.current = hospitals.map((hospital, idx) => {
+      const isClosest = idx === 0;
+      const icon = L.divIcon({
+        className: "",
+        iconSize: [32, 32], iconAnchor: [16, 16], popupAnchor: [0, -16],
+        html: `<div style="width:32px;height:32px;border-radius:50%;background:rgba(5,16,36,0.92);border:2px solid ${isClosest ? "#18d8c0" : "rgba(77,159,255,0.5)"};display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;box-shadow:0 0 ${isClosest ? "14px" : "5px"} ${isClosest ? "rgba(24,216,192,0.65)" : "rgba(77,159,255,0.25)"};">🏥</div>`,
+      });
+
+      const dirUrl = `https://www.google.com/maps/dir/?api=1&origin=${userLat},${userLng}&destination=${hospital.lat},${hospital.lng}&travelmode=driving`;
+      const popHtml = `
+        <div style="padding:18px 18px 16px;font-family:'Sarabun',sans-serif;min-width:240px;">
+          <div style="font-weight:700;font-size:18px;color:#fff;line-height:1.4;margin-bottom:8px;padding-right:20px">${hospital.name}</div>
+          <div style="display:flex;align-items:center;gap:6px;color:#7aaac4;font-size:17px;margin-bottom:14px;">
+            <span style="color:#18d8c0">📍</span> ${hospital.dist} กม. จากที่นี่
+          </div>
+          <a href="${dirUrl}" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:11px 14px;background:rgba(24,180,210,0.16);border:1px solid rgba(24,220,200,0.40);border-radius:11px;color:#68f6ff;font-size:17px;font-weight:700;text-decoration:none;letter-spacing:.03em;">
+            <svg xmlns='http://www.w3.org/2000/svg' width='15' height='15' viewBox='0 0 24 24' fill='none' stroke='#68f6ff' stroke-width='2.5'><polygon points='3 11 22 2 13 21 11 13 3 11'/></svg>
+            ดูเส้นทาง
+          </a>
+          ${hospital.phone ? `<a href="tel:${hospital.phone}" style="display:block;margin-top:10px;color:#00d4aa;font-size:16px;font-family:monospace;text-decoration:none;text-align:center;">📞 ${hospital.phone}</a>` : ""}
+        </div>`;
+
+      const marker = L.marker([hospital.lat, hospital.lng], { icon })
         .addTo(map)
-        .bindPopup(popup,{className:"dp",maxWidth:280})
-        .on("click",()=>setSelId(h.id));
-      return {id:h.id, m};
+        .bindPopup(popHtml, { className: "nbh-pop", maxWidth: 320 })
+        .on("click", () => setSelId(hospital.id));
+
+      return { id: hospital.id, m: marker };
     });
 
     setTimeout(() => {
       map.invalidateSize();
-      setTimeout(() => map.invalidateSize(), 300);
-      if (markers.current[0]) markers.current[0].m.openPopup();
-    }, 200);
-  },[phase, hospitals, userLat, userLng]);
+      if (markers.current[0]) {
+        map.setView(markers.current[0].m.getLatLng(), 15);
+        markers.current[0].m.openPopup();
+      }
+    }, 220);
+  }, [phase, hospitals, userLat, userLng, gpsAccuracy]);
 
-  useEffect(()=>{
-    if (!mapRef.current||!selId) return;
-    const entry = markers.current.find(x=>x.id===selId);
-    if (entry){ mapRef.current.panTo(entry.m.getLatLng(),{animate:true,duration:.4}); entry.m.openPopup(); }
-  },[selId]);
+  useEffect(() => {
+    if (!mapRef.current || !selId) return;
+    const selected = markers.current.find((m) => m.id === selId);
+    if (!selected) return;
+    mapRef.current.panTo(selected.m.getLatLng(), { animate: true, duration: 0.4 });
+    selected.m.openPopup();
+  }, [selId]);
 
-  /* ── invalidate map size when text-scale changes (prevents tile drift) ── */
-  useEffect(()=>{
+  useEffect(() => {
     if (!mapRef.current) return;
-    setTimeout(() => mapRef.current?.invalidateSize(true), 50);
-    setTimeout(() => mapRef.current?.invalidateSize(true), 300);
-  },[textScale]);
 
-  const recenter = useCallback(()=>{
-    if (!mapRef.current) return;
-    mapRef.current.flyTo([userLat,userLng],15,{animate:true,duration:.6});
-    userM.current?.openPopup();
-  },[userLat,userLng]);
+    const onScroll = () => mapRef.current?.invalidateSize(true);
+    window.addEventListener("scroll", onScroll, true);
 
-  const sel = hospitals.find(h=>h.id===selId);
-  const loading = phase!=="done"&&phase!=="error";
+    setTimeout(() => mapRef.current?.invalidateSize(true), 60);
+    setTimeout(() => mapRef.current?.invalidateSize(true), 320);
+
+    return () => window.removeEventListener("scroll", onScroll, true);
+  }, [textScale]);
+
+  const recenter = useCallback(() => {
+    if (userLat === null || userLng === null) return;
+    mapRef.current?.flyTo([userLat, userLng], 14, { animate: true, duration: 0.7 });
+    userMarkerRef.current?.openPopup();
+  }, [userLat, userLng]);
+
+  const loading = phase !== "done" && phase !== "error";
 
   return (
-    <div style={{
-      background:"rgba(10,16,30,.85)",
-      backdropFilter:"blur(14px)",
-      border:"1px solid rgba(255,255,255,.08)",
-      borderRadius:18,
-      overflow:"hidden",
-      display:"flex",
-      flexDirection:"column",
-      /* ✅ FIX: ไม่ใช้ maxHeight แบบ clamp เพราะมัน overflow ออกมา
-         ใช้ height เป็น % ของ viewport แทน และ flex column จัดการ */
-      flex:"0 0 auto",
-      minHeight:0,
-    }}>
-
-      {/* ── Header ── */}
-      <div style={{
-        padding:"16px 20px",
-        borderBottom:"1px solid rgba(255,255,255,.07)",
-        display:"flex",alignItems:"center",justifyContent:"space-between",
-        flexShrink:0,
-      }}>
-        <div style={{display:"flex",alignItems:"center",gap:12}}>
-          <div style={{
-            width:42,height:42,borderRadius:12,
-            background:"rgba(77,159,255,.12)",
-            border:"1px solid rgba(77,159,255,.3)",
-            display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,
-          }}>🏥</div>
-          <div>
-            <div style={{fontSize:"calc(16px * var(--text-scale,1))",fontWeight:700,color:"#d0e4ff",letterSpacing:".02em"}}>
-              โรงพยาบาลใกล้คุณ
-            </div>
-            <div style={{fontSize:"calc(12px * var(--text-scale,1))",color:"#4d7a9a",fontFamily:"monospace",letterSpacing:".06em",marginTop:2}}>
-              {phase==="done"&&hospitals.length>0
-                ? `พบ ${hospitals.length} แห่ง ภายใน 6 กม.`
-                : phase==="gps" ? "กำลังระบุ GPS..."
-                : phase==="fetch" ? "กำลังค้นหา..."
-                : phase==="map" ? "โหลดแผนที่..."
-                : phase==="error" ? errMsg
-                : "MEDICAL GRID"}
-            </div>
+    <div style={{ background: "linear-gradient(160deg,rgba(4,12,26,0.96),rgba(2,8,18,0.98))", border: "1px solid rgba(32,200,220,0.15)", borderRadius: 16, overflow: "hidden", display: "flex", flexDirection: "column", flex: "1 1 auto", minHeight: 430 }}>
+      <div style={{ padding: "18px 20px 16px", borderBottom: "1px solid rgba(32,200,220,0.09)", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
+        <div>
+          <div style={{ fontSize: 15, fontFamily: "monospace", color: "#4d9fff", letterSpacing: ".12em", textTransform: "uppercase", fontWeight: 700 }}>Patient Locator</div>
+          <div style={{ fontSize: 14, fontFamily: "monospace", color: "rgba(77,159,255,0.42)", marginTop: 4, lineHeight: 1.45 }}>
+            {phase === "done" && hospitals.length > 0
+              ? `พบ ${hospitals.length} แห่ง ภายใน 10 กม.`
+              : phase === "gps" ? "กำลังระบุตำแหน่ง GPS..."
+              : phase === "fetch" ? "กำลังค้นหาโรงพยาบาลใกล้บ้าน..."
+              : phase === "map" ? "กำลังโหลดแผนที่..."
+              : phase === "error" ? errMsg
+              : "Medical Grid"}
           </div>
         </div>
-        <button onClick={init} disabled={loading} title="รีเฟรช" style={{
-          background:"rgba(77,159,255,.08)",
-          border:"1px solid rgba(77,159,255,.2)",
-          borderRadius:10,color:"#4d9fff",
-          width:38,height:38,fontSize:20,
-          cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",
-          opacity:loading?.4:1,transition:"opacity .2s",
-        }}>↻</button>
+        <button onClick={init} disabled={loading} title="รีเฟรช" style={{ background: "rgba(77,159,255,.06)", border: "1px solid rgba(77,159,255,.15)", borderRadius: 9, color: "#4d9fff", width: 40, height: 40, fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", opacity: loading ? 0.35 : 1, transition: "opacity .2s" }}>↻</button>
       </div>
 
-      {/* ── Map ── fixed height, ไม่ยืดออก */}
-      <div style={{position:"relative",height:"220px",background:"#060c18",flexShrink:0}}>
-        <div ref={mapDiv} style={{width:"100%",height:"220px",minHeight:"220px"}} />
+      <div className="nbh-mapwrap" style={{ position: "relative", flex: "1 1 auto", minHeight: mapMinHeight, background: "#020810" }}>
+        <div style={{ position: "absolute", inset: 0, background: "radial-gradient(circle at 50% 40%, rgba(24,216,192,0.08), transparent 32%),linear-gradient(180deg, rgba(12,25,48,0.5), rgba(4,10,20,0.82))", pointerEvents: "none", zIndex: 0 }} />
+        <svg viewBox="0 0 1000 540" preserveAspectRatio="none" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", opacity: 0.22, pointerEvents: "none", zIndex: 0 }}>
+          {Array.from({ length: 10 }).map((_, i) => <line key={`h-${i}`} x1="0" x2="1000" y1={i * 60} y2={i * 60} stroke="rgba(104,246,255,0.25)" strokeWidth="1" />)}
+          {Array.from({ length: 14 }).map((_, i) => <line key={`v-${i}`} x1={i * 76} x2={i * 76} y1="0" y2="540" stroke="rgba(104,246,255,0.18)" strokeWidth="1" />)}
+          <path d="M110 410 C220 320 340 355 430 250 C525 138 655 182 820 96" fill="none" stroke="rgba(104,246,255,0.55)" strokeWidth="4" strokeDasharray="10 10" />
+          <circle cx="110" cy="410" r="8" fill="#21ffd0" />
+          <circle cx="820" cy="96" r="9" fill="#68f6ff" />
+        </svg>
+        <div ref={mapDiv} style={{ width: "100%", height: "100%", minHeight: mapMinHeight }} />
 
-        {/* Recenter button */}
-        {(phase==="done"||phase==="fetch")&&(
-          <button onClick={recenter} title="กลับตำแหน่งฉัน" style={{
-            position:"absolute",top:12,right:12,zIndex:900,
-            background:"rgba(0,229,192,0.15)",backdropFilter:"blur(8px)",
-            border:"1px solid rgba(0,229,192,0.4)",borderRadius:9,
-            color:"#00e5c0",padding:"8px 16px",
-            display:"flex",alignItems:"center",gap:7,
-            cursor:"pointer",
-            fontSize:"calc(13px * var(--text-scale,1))",
-            fontFamily:"monospace",
-            letterSpacing:".07em",boxShadow:"0 0 16px rgba(0,229,192,0.2)",
-            transition:"all .2s",fontWeight:700,
-          }}
-          onMouseEnter={e=>{e.currentTarget.style.background="rgba(0,229,192,0.28)";e.currentTarget.style.boxShadow="0 0 20px rgba(0,229,192,0.4)";}}
-          onMouseLeave={e=>{e.currentTarget.style.background="rgba(0,229,192,0.15)";e.currentTarget.style.boxShadow="0 0 16px rgba(0,229,192,0.2)";}}
-          >
-            📍 ตำแหน่งฉัน
-          </button>
+        {phase === "done" && (
+          <button onClick={recenter} style={{ position: "absolute", top: 128, right: 16, zIndex: 900, width: 40, height: 40, borderRadius: 10, background: "rgba(6,16,34,0.92)", border: "1px solid rgba(32,160,200,0.20)", color: "rgba(104,200,255,.75)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 18, transition: "all .2s" }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(32,200,220,0.14)"; e.currentTarget.style.color = "#68f6ff"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(6,16,34,0.92)"; e.currentTarget.style.color = "rgba(104,200,255,.75)"; }}>⊙</button>
         )}
 
-        {/* Loading overlay */}
-        {loading&&(
-          <div style={{
-            position:"absolute",inset:0,zIndex:1000,
-            background:"rgba(6,12,24,.93)",
-            display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:16,
-          }}>
-            <div style={{
-              width:48,height:48,borderRadius:"50%",
-              border:"3px solid rgba(77,159,255,.15)",
-              borderTop:"3px solid #4d9fff",
-              animation:"nhb-spin .9s linear infinite",
-            }}/>
-            <div style={{fontSize:"calc(13px * var(--text-scale,1))",fontFamily:"monospace",color:"#4d7a9a",letterSpacing:".15em"}}>
-              {phase==="gps"?"LOCATING GPS...":phase==="fetch"?"QUERYING OSM...":"LOADING MAP..."}
+        {loading && (
+          <div style={{ position: "absolute", inset: 0, zIndex: 1000, background: "rgba(2,6,16,.94)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16 }}>
+            <div style={{ width: 44, height: 44, borderRadius: "50%", border: "3px solid rgba(24,216,192,.1)", borderTop: "3px solid #18d8c0", animation: "nbh-spin .9s linear infinite" }} />
+            <div style={{ fontSize: 17, fontFamily: "monospace", color: "#2a6a7a", letterSpacing: ".12em" }}>
+              {phase === "gps" ? "LOCATING GPS..." : phase === "fetch" ? "QUERYING OSM..." : "LOADING MAP..."}
             </div>
           </div>
         )}
 
-        {/* Error overlay */}
-        {phase==="error"&&(
-          <div style={{
-            position:"absolute",inset:0,zIndex:1000,
-            background:"rgba(6,12,24,.93)",
-            display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:14,
-          }}>
-            <div style={{fontSize:36}}>⚠️</div>
-            <div style={{fontSize:"calc(14px * var(--text-scale,1))",color:"#ff5252",fontFamily:"monospace",textAlign:"center",padding:"0 28px"}}>{errMsg}</div>
-            <button onClick={init} style={{
-              background:"rgba(255,82,82,.1)",border:"1px solid rgba(255,82,82,.3)",
-              color:"#ff5252",borderRadius:9,padding:"9px 22px",
-              fontSize:"calc(13px * var(--text-scale,1))",fontFamily:"monospace",cursor:"pointer",
-            }}>ลองใหม่</button>
+        {phase === "error" && (
+          <div style={{ position: "absolute", inset: 0, zIndex: 1000, background: "rgba(2,6,16,.94)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12 }}>
+            <div style={{ fontSize: 30 }}>⚠️</div>
+            <div style={{ fontSize: 17, color: "#ff5252", fontFamily: "monospace", textAlign: "center", padding: "0 20px", lineHeight: 1.5 }}>{errMsg}</div>
+            <button onClick={init} style={{ background: "rgba(255,82,82,.1)", border: "1px solid rgba(255,82,82,.3)", color: "#ff5252", borderRadius: 8, padding: "8px 18px", fontSize: 17, fontFamily: "monospace", cursor: "pointer" }}>ลองใหม่</button>
           </div>
         )}
 
-        {/* Legend */}
-        {phase==="done"&&(
-          <div style={{
-            position:"absolute",top:14,left:16,zIndex:900,
-            background:"rgba(6,12,24,.88)",backdropFilter:"blur(6px)",
-            border:"1px solid rgba(255,255,255,.08)",borderRadius:10,
-            padding:"9px 14px",display:"flex",flexDirection:"column",gap:7,
-          }}>
-            {[
-              {color:"#ff5252",label:"ตำแหน่งคุณ"},
-              {color:"#4d9fff",label:"โรงพยาบาล"},
-            ].map(({color,label})=>(
-              <div key={label} style={{display:"flex",alignItems:"center",gap:8}}>
-                <div style={{width:11,height:11,borderRadius:"50%",background:color,boxShadow:`0 0 7px ${color}99`}}/>
-                <span style={{fontSize:"calc(12px * var(--text-scale,1))",color:"#8aa0c0",fontFamily:"monospace"}}>{label}</span>
-              </div>
-            ))}
+        {phase === "done" && (
+          <div style={{ position: "absolute", bottom: 14, left: 14, zIndex: 900, background: "rgba(3,9,20,0.84)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,.06)", borderRadius: 8, padding: "10px 14px", display: "flex", gap: 16, alignItems: "center" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <div style={{ width: 9, height: 9, borderRadius: "50%", background: "#18d8c0", boxShadow: "0 0 7px #18d8c0" }} />
+              <span style={{ fontSize: 17, color: "#6a98b4", fontFamily: "monospace" }}>ตำแหน่งปัจจุบัน</span>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <div style={{ width: 9, height: 9, borderRadius: "50%", border: "2px solid #4d9fff", background: "transparent" }} />
+              <span style={{ fontSize: 17, color: "#6a98b4", fontFamily: "monospace" }}>โรงพยาบาล</span>
+            </div>
+          </div>
+        )}
+
+        {phase === "done" && (
+          <div style={{ position: "absolute", bottom: 14, right: 16, zIndex: 900, fontSize: 15, color: "rgba(110,150,170,0.5)", fontFamily: "monospace", pointerEvents: "none" }}>
+            Powered by Google Maps
           </div>
         )}
       </div>
 
-      {/* ── Hospital cards (horizontal scroll) ── */}
-      {phase==="done"&&hospitals.length>0&&(
-        <div style={{padding:"12px 18px 8px",flexShrink:0}}>
-          <div style={{
-            fontSize:"calc(12px * var(--text-scale,1))",
-            color:"#4d7a9a",fontFamily:"monospace",
-            letterSpacing:".1em",marginBottom:10,fontWeight:600,
-          }}>NEARBY FACILITIES</div>
-          <div style={{
-            display:"flex",gap:10,
-            overflowX:"auto",scrollbarWidth:"none",
-            paddingBottom:6,
-          }}>
-            {hospitals.map(h=>{
-              const active = h.id===selId;
+      {phase === "done" && hospitals.length > 0 && (
+        <div style={{ flexShrink: 0, borderTop: "1px solid rgba(24,200,210,0.08)", background: "rgba(2,8,18,0.78)", position: "relative" }}>
+          <div style={{ padding: "12px 16px 4px", fontSize: 14, fontFamily: "monospace", fontWeight: 700, color: "rgba(77,159,255,0.4)", letterSpacing: ".1em", textTransform: "uppercase" }}>Nearby Facilities</div>
+          <div style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: 48, background: "linear-gradient(to right, transparent, rgba(2,8,18,0.92))", pointerEvents: "none", zIndex: 10 }} />
+          <div style={{ display: "flex", gap: 10, overflowX: "auto", scrollbarWidth: "none", padding: "6px 16px 16px", WebkitOverflowScrolling: "touch", scrollSnapType: "x mandatory" }}>
+            {hospitals.map((hospital) => {
+              const active = hospital.id === selId;
               return (
-                <button key={h.id} onClick={()=>setSelId(h.id)} style={{
-                  flexShrink:0, width:"calc(180px * var(--text-scale,1))", minWidth:140,
-                  background: active ? "rgba(77,159,255,.12)" : "rgba(255,255,255,.03)",
-                  border:`1px solid ${active?"rgba(77,159,255,.45)":"rgba(255,255,255,.08)"}`,
-                  borderRadius:12, padding:"10px 13px",
-                  textAlign:"left", cursor:"pointer",
-                  transition:"all .2s",
-                  boxShadow: active ? "0 0 24px rgba(77,159,255,.12)" : "none",
-                }}>
-                  {/* name */}
-                  <div style={{
-                    fontSize:"calc(14px * var(--text-scale,1))",fontWeight:600,
-                    color: active ? "#d0e4ff" : "#8aa0c0",
-                    lineHeight:1.4, marginBottom:9,
-                    overflow:"hidden",
-                    display:"-webkit-box",
-                    WebkitLineClamp:2,
-                    WebkitBoxOrient:"vertical",
-                  }}>
-                    {h.name}
+                <button key={hospital.id} onClick={() => setSelId(hospital.id)} style={{ flexShrink: 0, width: 220, scrollSnapAlign: "start", background: active ? "rgba(24,200,210,0.09)" : "rgba(255,255,255,0.022)", border: `1px solid ${active ? "rgba(24,220,200,0.42)" : "rgba(255,255,255,0.055)"}`, borderRadius: 11, padding: "14px 14px", textAlign: "left", cursor: "pointer", transition: "all .18s", boxShadow: active ? "0 0 14px rgba(24,220,200,0.09)" : "none" }}>
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 8 }}>
+                    <div style={{ width: 34, height: 34, borderRadius: 8, flexShrink: 0, background: active ? "rgba(24,200,210,0.10)" : "rgba(255,255,255,0.04)", border: `1px solid ${active ? "rgba(24,220,200,0.28)" : "rgba(255,255,255,0.06)"}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>🏥</div>
+                    <div style={{ fontSize: 15, fontWeight: 600, color: active ? "#c8eeff" : "#5a7a94", lineHeight: 1.35, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{hospital.name}</div>
                   </div>
-
-                  {/* type + dist row */}
-                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
-                    {h.typeLabel!=="—"
-                      ? <span style={{
-                          fontSize:"calc(12px * var(--text-scale,1))",color:h.typeColor,
-                          background:`${h.typeColor}18`,
-                          border:`1px solid ${h.typeColor}35`,
-                          borderRadius:6,padding:"3px 9px",fontFamily:"monospace",
-                        }}>{h.typeLabel}</span>
-                      : <span/>}
-                    <span style={{
-                      fontSize:"calc(13px * var(--text-scale,1))",fontWeight:700,
-                      color: active ? "#4d9fff" : "#3a5a7a",
-                      fontFamily:"monospace",
-                    }}>{h.dist} กม.</span>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                    {hospital.typeLabel !== "-" ? (
+                      <span style={{ fontSize: 12, color: hospital.typeColor, background: `${hospital.typeColor}14`, border: `1px solid ${hospital.typeColor}26`, borderRadius: 4, padding: "3px 8px", fontFamily: "monospace" }}>{hospital.typeLabel}</span>
+                    ) : <span />}
+                    <span style={{ fontSize: 14, fontWeight: 700, color: active ? "#18d8c0" : "#264860", fontFamily: "monospace" }}>{hospital.dist} กม.</span>
                   </div>
-
-                  {/* phone */}
-                  {h.phone
-                    ? <a href={`tel:${h.phone}`} onClick={e=>e.stopPropagation()} style={{
-                        display:"block",
-                        fontSize:"calc(12px * var(--text-scale,1))",
-                        color:"#00d4aa",
-                        fontFamily:"monospace",textDecoration:"none",marginTop:4,
-                      }}>📞 {h.phone}</a>
-                    : <span style={{fontSize:"calc(11px * var(--text-scale,1))",color:"rgba(100,130,160,.4)",fontFamily:"monospace"}}>ไม่มีเบอร์ใน OSM</span>
-                  }
-
-                  {/* emergency */}
-                  {h.emergency&&(
-                    <div style={{
-                      marginTop:8,
-                      fontSize:"calc(11px * var(--text-scale,1))",
-                      color:"#ff5252",
-                      background:"rgba(255,82,82,.1)",
-                      border:"1px solid rgba(255,82,82,.25)",
-                      borderRadius:6,padding:"3px 9px",
-                      display:"inline-block",fontFamily:"monospace",
-                    }}>24H ฉุกเฉิน</div>
-                  )}
+                  <div style={{ fontSize: 13, color: "rgba(77,159,255,0.38)", fontFamily: "monospace" }}>
+                    {hospital.emergency ? <span style={{ color: "#ff5252" }}>24H ฉุกเฉิน</span> : "เปิดให้บริการ"}
+                  </div>
                 </button>
               );
             })}
+            <div style={{ flexShrink: 0, width: 16 }} />
           </div>
         </div>
       )}
-
-      <style>{`@keyframes nhb-spin { to{transform:rotate(360deg)} }`}</style>
     </div>
   );
 }

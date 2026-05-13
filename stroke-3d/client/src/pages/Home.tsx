@@ -29,6 +29,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import StrokeChatWidget from "@/components/StrokeChatWidget";
 import HomeCommandPanel from "@/components/HomeCommandPanel";
 import NearbyBrainHospitals from "@/components/NearbyBrainHospitals";
+import SpeechSceneOverlay from "@/components/SpeechSceneOverlay";
+
+const SCENE_TRANSITION_MS = 260;
+const WHEEL_SCENE_THRESHOLD = 60;
+const WHEEL_GESTURE_IDLE_MS = 120;
 
 export default function Home() {
   const { user } = useAuth();
@@ -41,16 +46,56 @@ export default function Home() {
   const [btnPressed, setBtnPressed] = useState(false);
   const lastScrollTime = useRef(Date.now());
   const scrollAccumulator = useRef(0);
+  const activeSceneRef = useRef(0);
+  const isTransitioningRef = useRef(false);
+  const wheelGestureLockedRef = useRef(false);
+  const wheelIdleTimerRef = useRef<number | null>(null);
+  const transitionTimerRef = useRef<number | null>(null);
   const [showChat, setShowChat] = useState(false);
 
   // Enable text selection to speak
   useSelectableText();
+
+  useEffect(() => {
+    activeSceneRef.current = activeScene;
+  }, [activeScene]);
+
+  const finishTransition = useCallback(() => {
+    isTransitioningRef.current = false;
+    setIsTransitioning(false);
+    scrollAccumulator.current = 0;
+    setScrollProgress(0);
+  }, []);
+
+  const beginSceneTransition = useCallback((targetScene: number, _direction: number) => {
+    if (isTransitioningRef.current || showGame || showChat) return;
+
+    const nextScene = Math.max(0, Math.min(targetScene, SCENE_COUNT - 1));
+    if (nextScene === activeSceneRef.current) return;
+
+    isTransitioningRef.current = true;
+    setIsTransitioning(true);
+    scrollAccumulator.current = 0;
+    setScrollProgress(0);
+    setActiveScene(nextScene);
+
+    if (transitionTimerRef.current) window.clearTimeout(transitionTimerRef.current);
+    transitionTimerRef.current = window.setTimeout(finishTransition, SCENE_TRANSITION_MS);
+  }, [finishTransition, showChat, showGame]);
+
+  useEffect(() => {
+    return () => {
+      if (transitionTimerRef.current) window.clearTimeout(transitionTimerRef.current);
+      if (wheelIdleTimerRef.current) window.clearTimeout(wheelIdleTimerRef.current);
+    };
+  }, []);
 
   // รับ game session result จาก iframe แล้วบันทึกลง Supabase
   useEffect(() => {
     const handleMessage = async (e: MessageEvent) => {
       if (!e.data || e.data.type !== 'GAME_SESSION_END') return;
       const d = e.data;
+      if (!d.completed) return;
       if (!user) return;
       try {
         const { error } = await supabase.from('game_sessions').insert({
@@ -60,7 +105,8 @@ export default function Home() {
           reps: d.reps ?? 0,
           time_sec: d.time_sec ?? 0,
           rank: d.rank ?? 'D',
-          completed: d.completed ?? false,
+          accuracy: d.accuracy ?? 0,
+          completed: true,
           mode: d.mode ?? 'standard',
           bombs_hit: d.bombs_hit ?? 0,
           walls_hit: d.walls_hit ?? 0,
@@ -71,6 +117,7 @@ export default function Home() {
           console.error('[Home] Supabase insert error:', error.message);
         } else {
           console.log('[Home] Game session saved successfully');
+          window.dispatchEvent(new CustomEvent('game-session-saved'));
         }
       } catch (err) {
         console.error('[Home] Runtime error saving game_session:', err);
@@ -87,72 +134,68 @@ export default function Home() {
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
 
+      if (showGame || showChat) return;
+
       const now = Date.now();
       const timeDelta = now - lastScrollTime.current;
       lastScrollTime.current = now;
 
-      scrollAccumulator.current += e.deltaY;
-      const threshold = 120;
+      if (wheelIdleTimerRef.current) window.clearTimeout(wheelIdleTimerRef.current);
+      wheelIdleTimerRef.current = window.setTimeout(() => {
+        wheelGestureLockedRef.current = false;
+        scrollAccumulator.current = 0;
+        setScrollProgress(0);
+      }, WHEEL_GESTURE_IDLE_MS);
 
-      if (Math.abs(scrollAccumulator.current) > threshold && !isTransitioning && !showGame && !showChat) {
-        if (scrollAccumulator.current > 0 && activeScene < SCENE_COUNT - 1) {
-          setIsTransitioning(true);
-          setActiveScene((prev) => Math.min(prev + 1, SCENE_COUNT - 1));
-          scrollAccumulator.current = 0;
-          setTimeout(() => {
-            setIsTransitioning(false);
-            scrollAccumulator.current = 0;
-          }, 850);
-        } else if (scrollAccumulator.current < 0 && activeScene > 0) {
-          setIsTransitioning(true);
-          setActiveScene((prev) => Math.max(prev - 1, 0));
-          scrollAccumulator.current = 0;
-          setTimeout(() => {
-            setIsTransitioning(false);
-            scrollAccumulator.current = 0;
-          }, 850);
-        }
+      if (isTransitioningRef.current || wheelGestureLockedRef.current) {
+        scrollAccumulator.current = 0;
+        setScrollProgress(0);
+        return;
       }
 
       if (timeDelta > 200) {
         scrollAccumulator.current = e.deltaY;
+      } else {
+        scrollAccumulator.current += e.deltaY;
       }
 
-      const progress = Math.min(1, Math.max(0, Math.abs(scrollAccumulator.current) / threshold));
+      const progress = Math.min(1, Math.max(0, Math.abs(scrollAccumulator.current) / WHEEL_SCENE_THRESHOLD));
       setScrollProgress(progress);
+
+      if (Math.abs(scrollAccumulator.current) > WHEEL_SCENE_THRESHOLD) {
+        const direction = scrollAccumulator.current > 0 ? 1 : -1;
+        const targetScene = activeSceneRef.current + direction;
+        wheelGestureLockedRef.current = true;
+        beginSceneTransition(targetScene, direction);
+      }
     };
 
     window.addEventListener("wheel", handleWheel, { passive: false });
-    return () => window.removeEventListener("wheel", handleWheel);
-  }, [activeScene, showIntro, isTransitioning, showGame, showChat]);
+    return () => {
+      window.removeEventListener("wheel", handleWheel);
+      if (wheelIdleTimerRef.current) window.clearTimeout(wheelIdleTimerRef.current);
+    };
+  }, [beginSceneTransition, showIntro, showGame, showChat]);
 
   // Keyboard navigation
   useEffect(() => {
     if (showIntro || showGame || showChat) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (isTransitioning) return;
+      if (isTransitioningRef.current) return;
 
       if (e.key === "ArrowDown" || e.key === "ArrowRight" || e.key === " ") {
         e.preventDefault();
-        if (activeScene < SCENE_COUNT - 1) {
-          setIsTransitioning(true);
-          setActiveScene((prev) => prev + 1);
-          setTimeout(() => setIsTransitioning(false), 800);
-        }
+        beginSceneTransition(activeSceneRef.current + 1, 1);
       } else if (e.key === "ArrowUp" || e.key === "ArrowLeft") {
         e.preventDefault();
-        if (activeScene > 0) {
-          setIsTransitioning(true);
-          setActiveScene((prev) => prev - 1);
-          setTimeout(() => setIsTransitioning(false), 800);
-        }
+        beginSceneTransition(activeSceneRef.current - 1, -1);
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [activeScene, showIntro, isTransitioning, showGame, showChat]);
+  }, [beginSceneTransition, showIntro, showGame, showChat]);
 
   // Touch support
   useEffect(() => {
@@ -165,20 +208,12 @@ export default function Home() {
     };
 
     const handleTouchEnd = (e: TouchEvent) => {
-      if (isTransitioning) return;
+      if (isTransitioningRef.current) return;
       const touchEndY = e.changedTouches[0].clientY;
       const delta = touchStartY - touchEndY;
 
       if (Math.abs(delta) > 50) {
-        if (delta > 0 && activeScene < SCENE_COUNT - 1) {
-          setIsTransitioning(true);
-          setActiveScene((prev) => prev + 1);
-          setTimeout(() => setIsTransitioning(false), 800);
-        } else if (delta < 0 && activeScene > 0) {
-          setIsTransitioning(true);
-          setActiveScene((prev) => prev - 1);
-          setTimeout(() => setIsTransitioning(false), 800);
-        }
+        beginSceneTransition(activeSceneRef.current + (delta > 0 ? 1 : -1), delta > 0 ? 1 : -1);
       }
     };
 
@@ -188,24 +223,19 @@ export default function Home() {
       window.removeEventListener("touchstart", handleTouchStart);
       window.removeEventListener("touchend", handleTouchEnd);
     };
-  }, [activeScene, showIntro, isTransitioning, showGame, showChat]);
+  }, [beginSceneTransition, showIntro, showGame, showChat]);
 
   const handleSceneChange = useCallback((scene: number) => {
-    if (isTransitioning) return;
-    setIsTransitioning(true);
-    setActiveScene(scene);
-    setTimeout(() => setIsTransitioning(false), 800);
-  }, [isTransitioning]);
+    beginSceneTransition(scene, scene > activeSceneRef.current ? 1 : -1);
+  }, [beginSceneTransition]);
 
   const handleStart = useCallback(() => {
     setShowIntro(false);
   }, []);
 
   const handleReplay = useCallback(() => {
-    setIsTransitioning(true);
-    setActiveScene(0);
-    setTimeout(() => setIsTransitioning(false), 800);
-  }, []);
+    beginSceneTransition(0, -1);
+  }, [beginSceneTransition]);
 
   const handleGameBtnClick = useCallback(() => {
     setBtnPressed(true);
@@ -395,6 +425,9 @@ export default function Home() {
 
       {/* Scene text content — hidden on scene 0 (replaced by HomeCommandPanel) */}
       {!showIntro && activeScene !== 0 && <SceneContent activeScene={activeScene} scrollProgress={scrollProgress} />}
+
+      {/* Speech training overlay */}
+      {!showIntro && <SpeechSceneOverlay activeScene={activeScene} />}
 
       {/* Command Dashboard — scene 0 only */}
       {!showIntro && activeScene === 0 && <HomeCommandPanel />}

@@ -64,13 +64,6 @@ const CheckIcon = () => (
   </svg>
 );
 
-const ShieldIcon = () => (
-  <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-    <path d="M9 12l2 2 4-4"/>
-  </svg>
-);
-
 // ─── Animated Canvas Background ───────────────────────────────────────────────
 function ParticleCanvas({ hue }: { hue: number }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -259,7 +252,7 @@ function RightPanel({ hue }: { hue: number }) {
 // ─── Main Login Component ──────────────────────────────────────────────────────
 export default function Login() {
   const [, navigate] = useLocation();
-  const { loginWithGoogle, loginAsAdmin, isLoggedIn } = useAuth();
+  const { loginWithGoogle, isLoggedIn } = useAuth();
 
   useEffect(() => {
     if (isLoggedIn) navigate('/');
@@ -282,7 +275,6 @@ export default function Login() {
   const [btnState, setBtnState] = useState<'idle' | 'loading' | 'success'>('idle');
   const [btnShake, setBtnShake] = useState(false);
   const [loaded, setLoaded] = useState(false);
-  const [showAdminHint, setShowAdminHint] = useState(false);
 
   const animRef = useRef<number>(0);
   const hueRef = useRef(DEFAULT_HUE);
@@ -329,10 +321,6 @@ export default function Login() {
     googleLogin();
   };
 
-  const handleAdminBypass = () => {
-    loginAsAdmin();
-  };
-
   const s = createStyles(hue);
   const btnLabel =
     btnState === 'loading' ? 'Signing in…' :
@@ -349,7 +337,6 @@ export default function Login() {
           100% { background-position: 0% 50%; }
         }
 
-        /* ── BODY: เกือบเต็มจอทุก device ── */
         .fdx-body {
           font-family: 'DM Sans', sans-serif;
           background: linear-gradient(135deg, #0a0e1a, #081218, #100a18, #0e0a12, #0a0e1a);
@@ -357,17 +344,16 @@ export default function Login() {
           animation: login-bg-anim 18s ease infinite;
           min-height: 100dvh;
           width: 100%;
-          padding: 12px;              /* คอม: เหลือขอบเล็กน้อย */
+          padding: 12px;
           display: flex;
           align-items: center;
           justify-content: center;
           overflow: auto;
         }
 
-        /* ── SHELL: ใหญ่ขึ้น เกือบเต็มจอคอม ── */
         .fdx-shell {
-          width: min(1500px, 100%);                      /* เพิ่มจาก 1320px */
-          height: min(1060px, calc(100dvh - 24px));       /* เพิ่มจาก 820px */
+          width: min(1500px, 100%);
+          height: min(1060px, calc(100dvh - 24px));
           min-height: min(600px, calc(100dvh - 24px));
           border-radius: 24px;
           overflow: hidden;
@@ -377,7 +363,7 @@ export default function Login() {
         }
 
         .fdx-left {
-          width: clamp(400px, 34vw, 500px);             /* กว้างขึ้นนิดหน่อย */
+          width: clamp(400px, 34vw, 500px);
           min-width: 0;
           background: var(--login-bg);
           color: var(--login-text);
@@ -412,10 +398,6 @@ export default function Login() {
         .fdx-btn-google:hover { border-color: ${s.accent} !important; box-shadow: 0 4px 16px rgba(0,0,0,0.1) !important; transform: translateY(-1px) !important; }
         .fdx-btn-signin:hover:not(:disabled) { transform: translateY(-2px) !important; box-shadow: 0 10px 28px ${s.accentShadowHover} !important; }
         .fdx-btn-signin:active:not(:disabled) { transform: translateY(0) !important; }
-        .fdx-btn-admin { position: relative; overflow: hidden; }
-        .fdx-btn-admin::before { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent); transform: translateX(-100%); transition: transform 0.5s ease; }
-        .fdx-btn-admin:hover::before { transform: translateX(100%); }
-        .fdx-btn-admin:hover { border-color: rgba(255,200,50,0.5) !important; box-shadow: 0 4px 20px rgba(255,200,50,0.15) !important; transform: translateY(-1px) !important; }
         .fdx-left h1, .fdx-left h1 em, .fdx-left p { overflow-wrap: anywhere; }
 
         @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(1.4)} }
@@ -429,10 +411,7 @@ export default function Login() {
         .fdx-fadein-d3 { animation-delay: 0.20s; opacity: 0; }
         .fdx-fadein-d4 { animation-delay: 0.28s; opacity: 0; }
         .fdx-fadein-d5 { animation-delay: 0.36s; opacity: 0; }
-        @keyframes adminPulse { 0%,100%{box-shadow:0 0 0 0 rgba(255,200,50,0.0)} 50%{box-shadow:0 0 0 4px rgba(255,200,50,0.12)} }
-        .fdx-admin-pulse { animation: adminPulse 3s ease-in-out infinite; }
 
-        /* ── จอสูงน้อย (landscape laptop) ── */
         @media (max-height: 820px) and (min-width: 1025px) {
           .fdx-left { justify-content: flex-start; gap: 12px; padding-top: 26px; padding-bottom: 22px; }
           .fdx-left h1 { font-size: clamp(27px, 2.15vw, 32px) !important; line-height: 1.12 !important; margin-bottom: 6px !important; }
@@ -441,7 +420,6 @@ export default function Login() {
           .fdx-fadein-d3 { gap: 8px !important; }
           .fdx-btn-signin { margin-top: 4px !important; padding: 12px !important; }
           .fdx-btn-google { padding: 10px !important; }
-          .fdx-btn-admin { padding: 8px 10px !important; }
           .fdx-register-link { display: none; }
           .fdx-fadein-d5 { display: none; }
         }
@@ -451,68 +429,25 @@ export default function Login() {
           .fdx-left p { font-size: 12px !important; line-height: 1.45 !important; }
         }
 
-        /* ── iPad / Tablet (768px – 1024px) ── */
         @media (max-width: 1024px) {
-          .fdx-body {
-            align-items: flex-start;
-            padding: 8px;             /* ลดขอบให้กว้างขึ้น */
-          }
-          .fdx-shell {
-            width: 100%;
-            height: calc(100dvh - 16px);   /* เกือบเต็มจอ iPad */
-            min-height: calc(100dvh - 16px);
-            flex-direction: column;
-            border-radius: 20px;
-          }
-          .fdx-right {
-            order: 1;
-            flex: 0 0 clamp(200px, 32dvh, 320px) !important;
-            width: 100%;
-            min-height: 200px;
-          }
-          .fdx-left {
-            order: 2;
-            width: 100%;
-            padding: 28px 32px;
-            justify-content: flex-start;
-            gap: 20px;
-            overflow: visible;
-          }
-          .fdx-left::before {
-            top: 0; right: 0; bottom: auto;
-            width: auto; height: 4px;
-            border-radius: 0;
-          }
+          .fdx-body { align-items: flex-start; padding: 8px; }
+          .fdx-shell { width: 100%; height: calc(100dvh - 16px); min-height: calc(100dvh - 16px); flex-direction: column; border-radius: 20px; }
+          .fdx-right { order: 1; flex: 0 0 clamp(200px, 32dvh, 320px) !important; width: 100%; min-height: 200px; }
+          .fdx-left { order: 2; width: 100%; padding: 28px 32px; justify-content: flex-start; gap: 20px; overflow: visible; }
+          .fdx-left::before { top: 0; right: 0; bottom: auto; width: auto; height: 4px; border-radius: 0; }
           .fdx-left h1 { font-size: clamp(28px, 5vw, 40px) !important; }
           .fdx-left p { max-width: 100% !important; }
         }
 
-        /* ── มือถือ (≤ 640px) ── */
         @media (max-width: 640px) {
-          .fdx-body {
-            padding: 0;
-            align-items: stretch;
-          }
-          .fdx-shell {
-            width: 100%;
-            height: 100dvh;
-            min-height: 100dvh;
-            border-radius: 0;
-            box-shadow: none;
-          }
-          .fdx-right {
-            flex-basis: clamp(140px, 25dvh, 220px) !important;
-            min-height: 140px;
-          }
-          .fdx-left {
-            padding: 22px 18px 18px;
-            gap: 16px;
-          }
+          .fdx-body { padding: 0; align-items: stretch; }
+          .fdx-shell { width: 100%; height: 100dvh; min-height: 100dvh; border-radius: 0; box-shadow: none; }
+          .fdx-right { flex-basis: clamp(140px, 25dvh, 220px) !important; min-height: 140px; }
+          .fdx-left { padding: 22px 18px 18px; gap: 16px; }
           .fdx-left h1 { font-size: clamp(22px, 7.5vw, 30px) !important; line-height: 1.12 !important; margin-bottom: 8px !important; }
           .fdx-left p { font-size: 13px !important; line-height: 1.7 !important; }
           .fdx-input { min-height: 48px; font-size: 16px !important; }
-          .fdx-btn-signin, .fdx-btn-google, .fdx-btn-admin { min-height: 48px; }
-          .fdx-btn-admin span { display: none; }
+          .fdx-btn-signin, .fdx-btn-google { min-height: 48px; }
           .fdx-forgot { margin-left: auto; }
         }
       `}</style>
@@ -611,18 +546,6 @@ export default function Login() {
                 style={{ width: '100%', padding: 12, fontFamily: "'DM Sans',sans-serif", fontSize: 14, fontWeight: 500, color: '#1a1a1a', background: '#fff', border: '1.5px solid #e0deda', borderRadius: 10, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, transition: 'border-color 0.2s, box-shadow 0.2s, transform 0.15s', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
               >
                 <GoogleIcon/> เข้าสู่ระบบด้วย Google
-              </button>
-
-              <button
-                className="fdx-btn-admin fdx-admin-pulse"
-                onClick={handleAdminBypass}
-                onMouseEnter={() => setShowAdminHint(true)}
-                onMouseLeave={() => setShowAdminHint(false)}
-                style={{ width: '100%', padding: '10px 12px', fontFamily: "'DM Sans',sans-serif", fontSize: 12, fontWeight: 500, color: 'rgba(180,140,40,0.85)', background: 'rgba(255,200,50,0.06)', border: '1px dashed rgba(255,200,50,0.25)', borderRadius: 10, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, transition: 'all 0.2s ease', letterSpacing: 0.3 }}
-              >
-                <ShieldIcon/>
-                Admin – เข้าหน้าหลักทันที
-                <span style={{ fontSize: 9, padding: '2px 6px', background: 'rgba(255,200,50,0.12)', borderRadius: 4, letterSpacing: 0.5, color: 'rgba(180,140,40,0.6)', opacity: showAdminHint ? 1 : 0, transition: 'opacity 0.2s' }}>DEV ONLY</span>
               </button>
 
               <div className="fdx-register-link" style={{ fontSize: 13, color: '#888', marginTop: 2 }}>

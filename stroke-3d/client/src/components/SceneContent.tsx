@@ -17,8 +17,27 @@ interface SceneContentProps {
 // ─── TextBoxes layout ─────────────────────────────────────────────
 function TextBoxesLayout({ scene }: { scene: SceneData }) {
   if (!scene.textBoxes?.length) return null;
+  const isSpeechScene = scene.id === 2;
+
   return (
     <>
+      {isSpeechScene && (
+        <style>{`
+          @keyframes speechCardBreathe {
+            0%, 100% { box-shadow: 0 14px 34px rgba(0,0,0,0.44), 0 0 20px rgba(0,229,192,0.16), inset 0 0 18px rgba(0,229,192,0.05); }
+            50% { box-shadow: 0 18px 44px rgba(0,0,0,0.5), 0 0 28px rgba(255,62,214,0.2), inset 0 0 24px rgba(0,229,192,0.08); }
+          }
+          @keyframes speechCardSweep {
+            0% { transform: translateX(-120%); opacity: 0; }
+            30%, 60% { opacity: 0.55; }
+            100% { transform: translateX(140%); opacity: 0; }
+          }
+          @keyframes speechIconPulse {
+            0%, 100% { transform: scale(1); opacity: 0.72; }
+            50% { transform: scale(1.08); opacity: 1; }
+          }
+        `}</style>
+      )}
       {scene.textBoxes.map((box, i) => (
         <motion.div
           key={i}
@@ -35,32 +54,98 @@ function TextBoxesLayout({ scene }: { scene: SceneData }) {
             pointerEvents: "none",
           }}
         >
+          {isSpeechScene && i > 0 && (
+            <div
+              style={{
+                position: "absolute",
+                left: 18,
+                top: "50%",
+                width: 48,
+                height: 48,
+                transform: "translateY(-50%)",
+                borderRadius: "50%",
+                display: "grid",
+                placeItems: "center",
+                border: "1px solid rgba(0,229,192,0.48)",
+                background: "linear-gradient(145deg,rgba(2,16,30,0.88),rgba(24,7,34,0.78))",
+                color: scene.accentColor,
+                fontFamily: "var(--font-mono, monospace)",
+                fontSize: 18,
+                fontWeight: 800,
+                boxShadow: "0 0 18px rgba(0,229,192,0.22), 0 0 18px rgba(255,62,214,0.14), inset 0 0 14px rgba(0,229,192,0.06)",
+                animation: "speechIconPulse 2.8s ease-in-out infinite",
+                zIndex: 2,
+              }}
+            >
+              {i === 4 ? "★" : i}
+            </div>
+          )}
           <div style={{
-            background: "rgba(4,12,24,0.78)",
-            border: `1px solid ${scene.accentColor}40`,
-            borderRadius: 10,
+            position: "relative",
+            overflow: "hidden",
+            background: isSpeechScene
+              ? "linear-gradient(135deg, rgba(4,14,30,0.9), rgba(11,10,34,0.86) 52%, rgba(28,8,40,0.82))"
+              : "rgba(4,12,24,0.78)",
+            border: isSpeechScene ? "1px solid rgba(0,229,192,0.42)" : `1px solid ${scene.accentColor}40`,
+            borderRadius: isSpeechScene ? 8 : 10,
             backdropFilter: "blur(10px)",
-            padding: "10px 14px 12px",
-            boxShadow: `0 4px 24px rgba(0,0,0,0.5), 0 0 0 1px ${scene.accentColor}15`,
+            padding: isSpeechScene
+              ? (i === 0 ? "16px 22px" : "16px 20px 17px 86px")
+              : "10px 14px 12px",
+            boxShadow: isSpeechScene
+              ? "0 14px 34px rgba(0,0,0,0.46), 0 0 0 1px rgba(255,62,214,0.16), 0 0 24px rgba(0,229,192,0.12)"
+              : `0 4px 24px rgba(0,0,0,0.5), 0 0 0 1px ${scene.accentColor}15`,
+            animation: isSpeechScene ? `speechCardBreathe ${3.8 + i * 0.25}s ease-in-out infinite` : undefined,
           }}>
+            {isSpeechScene && (
+              <span
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  borderRadius: 8,
+                  padding: 1,
+                  background: "linear-gradient(135deg,rgba(0,229,192,0.72),rgba(104,246,255,0.22) 42%,rgba(255,62,214,0.56))",
+                  WebkitMask: "linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)",
+                  WebkitMaskComposite: "xor",
+                  maskComposite: "exclude",
+                  pointerEvents: "none",
+                  opacity: 0.9,
+                }}
+              />
+            )}
+            {isSpeechScene && (
+              <span
+                style={{
+                  position: "absolute",
+                  inset: "0 auto 0 0",
+                  width: "38%",
+                  background: "linear-gradient(90deg, transparent, rgba(0,229,192,0.16), rgba(255,62,214,0.12), transparent)",
+                  animation: `speechCardSweep ${4.4 + i * 0.35}s ease-in-out infinite`,
+                }}
+              />
+            )}
             {box.title && (
               <div style={{
                 color: scene.accentColor,
-                fontSize: (box.fontSize ?? 13) + 1,
-                fontWeight: 700,
+                fontSize: isSpeechScene && i === 0 ? (box.fontSize ?? 13) : (box.fontSize ?? 13) + 2,
+                fontWeight: isSpeechScene ? 800 : 700,
                 fontFamily: "var(--font-mono, monospace)",
-                marginBottom: 6,
+                marginBottom: isSpeechScene ? 10 : 6,
                 letterSpacing: "0.02em",
+                position: "relative",
+                zIndex: 1,
               }}>
                 <SelectableText>{box.title}</SelectableText>
               </div>
             )}
             <div style={{
               color: "rgba(195,215,235,0.85)",
-              fontSize: box.fontSize ?? 13,
-              lineHeight: 1.7,
+              fontSize: isSpeechScene && i === 0 ? 20 : box.fontSize ?? 13,
+              lineHeight: isSpeechScene ? 1.58 : 1.7,
               whiteSpace: "pre-line",
               fontFamily: "var(--font-body, system-ui, sans-serif)",
+              position: "relative",
+              zIndex: 1,
             }}>
               <SelectableText>{box.body}</SelectableText>
             </div>
