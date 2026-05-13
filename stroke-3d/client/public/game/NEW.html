@@ -3234,6 +3234,14 @@ body.theme-inferno .megaphone-btn {
         <script>
         window.__forceOpenSpeechApp = function() {
             var loader = document.getElementById('app-loader');
+            var dashboard = document.getElementById('dashboard-screen');
+            var mainCard = document.getElementById('main-card');
+
+            if (!dashboard || !mainCard) {
+                setTimeout(window.__forceOpenSpeechApp, 500);
+                return;
+            }
+
             if (window._finishLoader) window._finishLoader();
 
             var screens = document.querySelectorAll ? document.querySelectorAll('.screen') : [];
@@ -3244,11 +3252,16 @@ body.theme-inferno .megaphone-btn {
             var stats = document.getElementById('stats-bar');
             var topBtns = document.getElementById('top-btns');
             var pet = document.getElementById('virtual-pet');
-            var dashboard = document.getElementById('dashboard-screen');
+            mainCard.style.cssText = '';
+            mainCard.style.position = 'relative';
+            mainCard.style.margin = '0 auto';
+            mainCard.style.minHeight = 'auto';
+
             if (stats) stats.style.display = 'flex';
             if (topBtns) topBtns.style.display = 'flex';
             if (pet) pet.style.display = 'flex';
-            if (dashboard) dashboard.classList.add('active');
+            dashboard.style.display = 'flex';
+            dashboard.classList.add('active');
 
             if (loader) {
                 loader.style.opacity = '0';
@@ -5807,11 +5820,16 @@ function showToast(message, type = 'info', duration = 3000) {
 function safeInitApp() {
     try { initApp(); } catch(e) {
         console.error('initApp error:', e);
+        if (window.__forceOpenSpeechApp) {
+            window.__forceOpenSpeechApp();
+            return;
+        }
         // ซ่อน loader แม้จะ error
         const loader = document.getElementById('app-loader');
         if (loader) { loader.style.opacity='0'; loader.style.pointerEvents='none'; setTimeout(()=>loader.remove(),520); }
     }
 }
+window.safeInitApp = safeInitApp;
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', safeInitApp);
 } else {
@@ -5819,13 +5837,17 @@ if (document.readyState === 'loading') {
 }
 // Safety: ถ้าไม่ fire ภายใน 1.5 วินาที ให้รัน initApp เองเลย
 setTimeout(() => {
-    if (document.getElementById('app-loader')) initApp();
+    if (document.getElementById('app-loader')) safeInitApp();
 }, 1500);
 
 // Hard fallback: ไม่ว่าอะไรจะเกิดขึ้น ซ่อน loader ใน 4 วิ
 setTimeout(() => {
     const loader = document.getElementById('app-loader');
     if (loader) {
+        if (window.__forceOpenSpeechApp) {
+            window.__forceOpenSpeechApp();
+            return;
+        }
         if (window._finishLoader) window._finishLoader();
         setTimeout(() => {
             loader.style.opacity = '0';
@@ -14177,5 +14199,34 @@ const FALLBACK_BANK = {
             <!-- ═══ BOTTOM BAR ═══ (removed close button, use X top-right) -->
         </div>
 
+<script>
+(function() {
+    function recoverIfBlank() {
+        var loader = document.getElementById('app-loader');
+        var dashboard = document.getElementById('dashboard-screen');
+        var activeScreen = document.querySelector ? document.querySelector('.screen.active') : null;
+
+        if (loader && window.safeInitApp) {
+            try { window.safeInitApp(); } catch (e) {}
+        }
+
+        if ((!activeScreen || (dashboard && !dashboard.classList.contains('active'))) && window.__forceOpenSpeechApp) {
+            window.__forceOpenSpeechApp();
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(recoverIfBlank, 300);
+            setTimeout(recoverIfBlank, 2500);
+            setTimeout(recoverIfBlank, 6500);
+        });
+    } else {
+        setTimeout(recoverIfBlank, 300);
+        setTimeout(recoverIfBlank, 2500);
+        setTimeout(recoverIfBlank, 6500);
+    }
+})();
+</script>
 </body>
 </html>
