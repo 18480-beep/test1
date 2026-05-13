@@ -875,25 +875,25 @@ body{
 //  SCENE CONFIG (normal mode)
 // ═══════════════════════════════════════════════════════
 const SCENES = [
-  { id:0,  type:"video",    label:"ตอนที่ 1",          src:"videos/scene1.mp4",  text:"ตอนที่ 1 — แก้ข้อความได้ในโค้ด",         next:1  },
+  { id:0,  type:"video",    label:"ตอนที่ 1",          src:"videos/scene1.mp4",  text:"ตอนที่ 1 — ",         next:1  },
   { id:1,  type:"facegame", label:"Face Challenge 1",  title:"ยิ้มสิ!",          desc:"ยิ้มให้กว้างที่สุด แล้วค้างไว้",         action:"smile",     emoji:"😁", holdSec:3, rounds:10, next:2  },
-  { id:2,  type:"video",    label:"ตอนที่ 2",          src:"videos/scene2.mp4",  text:"ตอนที่ 2 — แก้ข้อความได้ในโค้ด",         next:3  },
+  { id:2,  type:"video",    label:"ตอนที่ 2",          src:"videos/scene2.mp4",  text:"ตอนที่ 2 — ",         next:3  },
   { id:3,  type:"facegame", label:"Face Challenge 2",  title:"อ้าปากกว้าง!",    desc:"อ้าปากให้สุด แล้วค้างไว้",               action:"open",      emoji:"😮", holdSec:3, rounds:10, next:4  },
-  { id:4,  type:"video",    label:"ตอนที่ 3",          src:"videos/scene3.mp4",  text:"ตอนที่ 3 — แก้ข้อความได้ในโค้ด",         next:5  },
+  { id:4,  type:"video",    label:"ตอนที่ 3",          src:"videos/scene3.mp4",  text:"ตอนที่ 3 — ",         next:5  },
   { id:5,  type:"facegame", label:"Face Challenge 3",  title:"เลิกคิ้ว!",        desc:"เลิกคิ้วทั้งสองข้างขึ้นให้สูง",           action:"brow",      emoji:"🤨", holdSec:3, rounds:10, next:6  },
-  { id:6,  type:"video",    label:"ตอนที่ 4",          src:"videos/scene4.mp4",  text:"ตอนที่ 4 — แก้ข้อความได้ในโค้ด",         next:7  },
+  { id:6,  type:"video",    label:"ตอนที่ 4",          src:"videos/scene4.mp4",  text:"ตอนที่ 4 — ",         next:7  },
   { id:7,  type:"facegame", label:"Face Challenge 4",  title:"ยิ้มสิ!",           desc:"ยิ้มให้กว้างที่สุด แล้วค้างไว้",          action:"smile",     emoji:"😁", holdSec:3, rounds:10, next:8  },
-  { id:8,  type:"video",    label:"ตอนที่ 5",          src:"videos/scene5.mp4",  text:"ตอนที่ 5 — แก้ข้อความได้ในโค้ด",         next:9  },
+  { id:8,  type:"video",    label:"ตอนที่ 5",          src:"videos/scene5.mp4",  text:"ตอนที่ 5 — ",         next:9  },
   { id:9,  type:"facegame", label:"Face Challenge 5",  title:"ทำปากจู๋!",        desc:"ทำปากจู๋ อย่าอ้าปาก แล้วค้างไว้",        action:"purse",     emoji:"😗", holdSec:3, rounds:10, next:10 },
-  { id:10, type:"video",    label:"ตอนที่ 6",          src:"videos/scene6.mp4",  text:"ตอนที่ 6 — แก้ข้อความได้ในโค้ด",         next:11 },
+  { id:10, type:"video",    label:"ตอนที่ 6",          src:"videos/scene6.mp4",  text:"ตอนที่ 6 — ",         next:11 },
   { id:11, type:"facegame", label:"Face Challenge 6",  title:"ยิ้มให้แย้ม!",     desc:"ยิ้มให้กว้างอีกครั้ง ค้างไว้",           action:"smile",     emoji:"😄", holdSec:3, rounds:10, next:12 },
-  { id:12, type:"video",    label:"ตอนที่ 7",          src:"videos/scene7.mp4",  text:"ตอนที่ 7 — แก้ข้อความได้ในโค้ด",         next:13 },
+  { id:12, type:"video",    label:"ตอนที่ 7",          src:"videos/scene7.mp4",  text:"ตอนที่ 7 — ",         next:13 },
   { id:13, type:"facegame", label:"Face Challenge 7",  title:"อ้าปากอีกที!",     desc:"อ้าปากกว้างๆ ค้างไว้ให้นานขึ้น",         action:"open",      emoji:"😲", holdSec:3, rounds:10, next:14 },
-  { id:14, type:"video",    label:"ตอนที่ 8",          src:"videos/scene8.mp4",  text:"ตอนที่ 8 — แก้ข้อความได้ในโค้ด",         next:15 },
+  { id:14, type:"video",    label:"ตอนที่ 8",          src:"videos/scene8.mp4",  text:"ตอนที่ 8 — ",         next:15 },
   { id:15, type:"facegame", label:"Face Challenge 8",  title:"เลิกคิ้วสูงๆ!",   desc:"เลิกคิ้วให้สุด ค้างนานขึ้น",             action:"brow",      emoji:"🙆", holdSec:3, rounds:10, next:16 },
-  { id:16, type:"video",    label:"ตอนที่ 9",          src:"videos/scene9.mp4",  text:"ตอนที่ 9 — แก้ข้อความได้ในโค้ด",         next:17 },
+  { id:16, type:"video",    label:"ตอนที่ 9",          src:"videos/scene9.mp4",  text:"ตอนที่ 9 — ",         next:17 },
   { id:17, type:"facegame", label:"Face Challenge 9",  title:"เลิกคิ้วสูงๆ!",    desc:"เลิกคิ้วทั้งสองข้างขึ้นให้สูงสุด",        action:"brow",      emoji:"🤨", holdSec:3, rounds:10, next:18 },
-  { id:18, type:"video",    label:"ตอนที่ 10",         src:"videos/scene10.mp4", text:"ตอนที่ 10 — แก้ข้อความได้ในโค้ด",        next:19 },
+  { id:18, type:"video",    label:"ตอนที่ 10",         src:"videos/scene10.mp4", text:"ตอนที่ 10 — ",        next:19 },
   { id:19, type:"facegame", label:"Face Challenge 10", title:"ปากจู๋สุดท้าย!",  desc:"ทำปากจู๋ค้างไว้ — ด่านสุดท้ายแล้ว!",    action:"purse",     emoji:"😙", holdSec:3, rounds:10, next:20 },
   { id:20, type:"video",    label:"ตอนที่ 11 — จบ",   src:"videos/scene11.mp4", text:"🎉 ยอดเยี่ยมมาก! ผ่านทุก Face Challenge แล้ว!", next:null }
 ]
@@ -946,7 +946,7 @@ const FACE_CHECKS = {
   smile:     r => r.smile_ratio > 5.0,
   open:      r => r.open_ratio  >  0.3,
   brow:      r => r.brow_ratio  >  0.34,
-  purse:     r => r.purse_ratio >  0.4 && r.smile_ratio > 2.0 && r.open_ratio < 0.1
+  purse:     r => r.purse_ratio >  0.35 && r.smile_ratio > 2.0 && r.open_ratio > 0.1
 }
 
 const FACE_DEBUG = {
@@ -1013,10 +1013,10 @@ function onYouTubeIframeAPIReady(){ ytAPIReady = true }
 //  FACE GAME POOL (for random interrupts)
 // ═══════════════════════════════════════════════════════
 const FG_POOL = [
-  { action:"smile",  title:"ยิ้มกว้างที่สุดเห็นฟัน! (ใบหน้าต้องเต็มกรอบเท่านั้นห้ามมีช่องว่างเยอะ)",      desc:"ยิ้มให้กว้างที่สุด แล้วค้างไว้",    emoji:"😁", holdSec:3, rounds:5 },
-  { action:"open",   title:"อ้าปากกว้างที่สุด!(ใบหน้าต้องเต็มกรอบเท่านั้นห้ามมีช่องว่างเยอะ)", desc:"อ้าปากให้สุด แล้วค้างไว้",         emoji:"😮", holdSec:3, rounds:5 },
-  { action:"brow",   title:"ยกคิ้วขึ้นสูงที่สุด!(ใบหน้าต้องเต็มกรอบเท่านั้นห้ามมีช่องว่างเยอะ)",    desc:"เลิกคิ้วทั้งสองข้างให้สูงที่สุด",  emoji:"🤨", holdSec:3, rounds:5 },
-  { action:"purse",  title:"ทำปากจู๋!(ใบหน้าต้องเต็มกรอบเท่านั้นห้ามมีช่องว่างเยอะ)",    desc:"ทำปากจู๋ อย่าอ้าปาก แล้วค้างไว้", emoji:"😗", holdSec:3, rounds:5 },
+  { action:"smile",  title:"ยิ้มกว้างที่สุดเห็นฟัน! (ใบหน้าต้องเต็มกรอบเท่านั้นห้ามมีช่องว่างเยอะ)",      desc:"ยิ้มให้กว้างที่สุด แล้วค้างไว้(ใบหน้าต้องเต็มกรอบเท่านั้นห้ามมีช่องว่างเยอะ)",    emoji:"😁", holdSec:3, rounds:5 },
+  { action:"open",   title:"อ้าปากกว้างที่สุด!(ใบหน้าต้องเต็มกรอบเท่านั้นห้ามมีช่องว่างเยอะ)", desc:"อ้าปากให้สุด แล้วค้างไว้(ใบหน้าต้องเต็มกรอบเท่านั้นห้ามมีช่องว่างเยอะ)",         emoji:"😮", holdSec:3, rounds:5 },
+  { action:"brow",   title:"ยกคิ้วขึ้นสูงที่สุด!(ใบหน้าต้องเต็มกรอบเท่านั้นห้ามมีช่องว่างเยอะ)",    desc:"ยกคิ้วทั้งสองข้างให้สูงที่สุด(ใบหน้าต้องเต็มกรอบเท่านั้นห้ามมีช่องว่างเยอะ)",  emoji:"🤨", holdSec:3, rounds:5 },
+  { action:"purse",  title:"ทำปากจู๋!(ใบหน้าต้องเต็มกรอบเท่านั้นห้ามมีช่องว่างเยอะ)",    desc:"ทำปากจู๋ อย่าอ้าปาก แล้วค้างไว้(ใบหน้าต้องเต็มกรอบเท่านั้นห้ามมีช่องว่างเยอะ)", emoji:"😗", holdSec:3, rounds:5 },
 ]
 
 function pickRandomFG(excludeAction){
