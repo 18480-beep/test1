@@ -50,14 +50,15 @@
   --color-warning-amber: oklch(0.72 0.18 55);
   --color-stroke-purple: oklch(0.25 0.08 340);
 
-  --font-display: 'Space Grotesk', sans-serif;
-  --font-body: 'IBM Plex Sans', sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  --font-display: 'Space Grotesk', 'Noto Sans Thai', sans-serif;
+  --font-body: 'IBM Plex Sans', 'Noto Sans Thai', sans-serif;
+  --font-mono: 'JetBrains Mono', 'Noto Sans Thai', monospace;
 }
 
 :root {
   /* Text-scale variable used across components (SceneContent, SettingsPanel ؆ลฯ) */
-  --text-scale: 1.3;
+  --text-scale: 1;
+  --text-scale-tight: 1;
   --radius: 0.5rem;
   --background: oklch(0.08 0.01 280);
   --foreground: oklch(0.92 0.01 90);
@@ -128,11 +129,12 @@
     /* ป้องกันขยายข้อความ (Safari/iOS) และ base font รองรับ accessibility */
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
-    font-size: calc(16px * var(--text-scale, 1));
+    /* font-size: calc(16px * var(--text-scale, 1)); */
   }
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-body);
+    font-size: calc(16px * var(--text-scale, 1));
     overflow-x: hidden;
     /* ช่วย iPad/iPhone ไม่ให้เอียงหน้าจอตอนแตะไฟลด์ฟอร์ม */
     -webkit-font-smoothing: antialiased;
@@ -210,7 +212,7 @@
 }
 
 /* ป้องกัน input บน iOS zoom เมื่อ focus (ต้อง ≥ 16px) */
-input, textarea, select { font-size: max(16px, 1rem); }
+input, textarea, select { font-size: 16px; }
 
 /* ป้องกันเนื้อหาล้น horizontal บนอุปกรณ์แคบ */
 @media (max-width: 480px) {

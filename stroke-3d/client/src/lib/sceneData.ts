@@ -3,10 +3,15 @@
  * Design: "Surgical Theater" — Dark Cinematic Medical Realism
  * Each scene represents a step in the anatomical journey from face to stroke
  *
+ * ⚠️  BASE CANVAS: 1920 × 1080 px
+ *     ค่า x, y, w, fontSize ทั้งหมดอิงกับ canvas นี้
+ *     SceneContent.tsx จะ scale อัตโนมัติตามขนาดจอจริง
+ *     ห้ามใส่ค่าที่คิดมาจากจอขนาดอื่น เพราะจะ offset ผิด
+ *
  * textBoxes?: เพิ่มกล่องข้อความหลายกล่องได้ต่อ scene
- *   x, y     = ตำแหน่งจากมุมบนซ้าย (px)
- *   w        = ความกว้าง (px)
- *   fontSize = ขนาดตัวอักษร (px)
+ *   x, y     = ตำแหน่งจากมุมบนซ้าย (px บน 1920×1080)
+ *   w        = ความกว้าง (px บน 1920×1080)
+ *   fontSize = ขนาดตัวอักษร (px บน 1920×1080)
  *   title    = หัวข้อ (ไม่ใส่ก็ได้)
  *   body     = เนื้อหา (รองรับ \n ขึ้นบรรทัดใหม่)
  *
@@ -14,6 +19,7 @@
  *   - x ไม่ใส่ = center กลางจอ
  *   - y = bottom offset (px) จากล่าง default 112
  *   - color ไม่ใส่ = ใช้ accentColor ของ scene
+ *   ⚠️  x, y, fontSize ของ gameButton ก็อิง 1920×1080 เช่นกัน
  */
 import { themeConfig } from "./themeConfig";
 
@@ -105,6 +111,8 @@ export const SCENES: SceneData[] = [
     image:
       "https://i.postimg.cc/4N72Q4vf/Chat-GPT-Image-May-10-2026-12-24-11-PM-(1).png",
     accentColor: themeConfig.scenes.scene2.accent,
+    // ⚠️ ค่า x, y, w, fontSize ด้านล่างอิง canvas 1920×1080
+    // SceneContent.tsx จะ scale ให้อัตโนมัติ
     textBoxes: [
       {
         x: 245, y: 98,
@@ -192,7 +200,7 @@ export const SCENES: SceneData[] = [
     facts: [
       "87% of all strokes are ischemic",
       "1.9 million neurons die every minute during stroke",
-      "Tissue plasminogen activator (tPA ) can dissolve clots",
+      "Tissue plasminogen activator (tPA) can dissolve clots",
       "Treatment window: within 4.5 hours of onset",
     ],
     gameButton: {

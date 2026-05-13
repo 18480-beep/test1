@@ -1,12 +1,16 @@
 import { useState } from "react";
-import type { CSSProperties } from "react";
 import TTSControlButton from "@/components/TTSControlButton";
 import { useBreakpoint } from "@/hooks/useBreakpoint";
 
 export default function AccessibleControlPanel() {
   const [audioEnabled, setAudioEnabled] = useState(true);
   const { isMobile, sidebarWidth } = useBreakpoint();
-  const leftOffset = isMobile ? "max(env(safe-area-inset-left, 0px), 10px)" : `${Math.max(14, sidebarWidth + 14)}px`;
+
+  // ✅ แก้ไข: clamp sidebarWidth ไม่ให้ติดลบ แล้วบวก offset 14px
+  const safeSidebarWidth = Math.max(0, sidebarWidth ?? 0);
+  const leftOffset = isMobile
+    ? "max(env(safe-area-inset-left, 0px), 10px)"
+    : `${safeSidebarWidth - 170}px`;
 
   return (
     <>
@@ -100,12 +104,10 @@ export default function AccessibleControlPanel() {
         }
       `}</style>
 
-      {/* Control Panel */}
       <div
         className="control-panel-container"
-        style={{ "--control-panel-left": leftOffset } as CSSProperties}
+        style={{ "--control-panel-left": leftOffset } as React.CSSProperties}
       >
-        {/* Audio Toggle Button */}
         <button
           className={`control-button ${audioEnabled ? "audio-on" : ""}`}
           onClick={() => setAudioEnabled(!audioEnabled)}
@@ -125,7 +127,6 @@ export default function AccessibleControlPanel() {
           )}
         </button>
 
-        {/* Text-to-Speech Control Button */}
         <TTSControlButton />
       </div>
     </>

@@ -38,22 +38,23 @@ const mint = "#21ffd0";
 const glass = "linear-gradient(145deg,rgba(10,22,44,0.84),rgba(5,14,28,0.90))";
 const bdr = "1px solid rgba(104,246,255,0.14)";
 
-// Quick layout controls:
-// X: positive = right, negative = left
-// Y: positive = down, negative = up
+const sidebarWidth = 72;
+
 const STATS_GAP = 8;
 const STATS_CARD_MIN_HEIGHT = 74;
 const MAIN_BLOCK_MIN_HEIGHT = 430;
 const COMMAND_DESKTOP_CANVAS_WIDTH = 2600;
 const COMMAND_DESKTOP_MIN_SCALE = 0.68;
-const COMMAND_HERO_SHIFT_X = -150;
 const COMMAND_HERO_SHIFT_Y = -20;
+const scaledPx = (px: number) => `calc(${px}px * var(--text-scale-tight, 1))`;
+const scaledClampPx = (min: number, fluid: string, max: number) =>
+  `clamp(${scaledPx(min)}, ${fluid}, ${scaledPx(max)})`;
 
 export default function HomeCommandPanel() {
   const { user } = useAuth();
   const [sessions, setSessions] = useState<SessionData[]>([]);
   const [speechProgress, setSpeechProgress] = useState<SpeechProgressData[]>([]);
-  const { isMobile, isTablet, width, height } = useBreakpoint();
+  const { isMobile, isTablet, isTabletLarge, width, height } = useBreakpoint();
 
   const loadGameSessions = useCallback(() => {
     if (!user) {
@@ -132,34 +133,57 @@ export default function HomeCommandPanel() {
     { label: "Last Sync", value: latestSync, sub: sessions.length ? "Latest" : "No Data", Icon: Clock3, color: cyan },
   ];
 
+  // ── Responsive layout variables ──────────────────────────────────────────
+  const isTabletAny     = isTablet || isTabletLarge;   // phone landscape / iPad ทุกรุ่น
   const isDenseViewport = !isMobile && (width < 1500 || height < 820);
   const isShortViewport = !isMobile && height < 760;
-  const isCompactDesktop = width < 1380 || isShortViewport;
-  const isRoomyDesktop = !isMobile && !isTablet && !isCompactDesktop;
+  const isCompactDesktop = isTabletLarge || width < 1380 || isShortViewport;
+  const isRoomyDesktop  = !isMobile && !isTabletAny && !isCompactDesktop;
+
   const mainCols = isMobile
     ? "1fr"
-    : isTablet
+    : isTabletAny
       ? "1fr"
       : isCompactDesktop
         ? "minmax(250px, 310px) minmax(0, 1fr)"
         : "minmax(280px, 310px) minmax(0, 1fr) minmax(220px, 260px)";
+
   const mainMinHeight = isDenseViewport ? 340 : MAIN_BLOCK_MIN_HEIGHT;
-  const panelGap = isMobile ? 14 : isDenseViewport ? 12 : 18;
-  const sidePad = isMobile ? 14 : isTablet ? 18 : isDenseViewport ? 22 : 34;
+  const panelGap      = isMobile ? 14 : isDenseViewport ? 12 : 18;
+
+  const sidePad = isMobile
+    ? 14
+    : isTabletAny
+      ? sidebarWidth + 18
+      : isDenseViewport
+        ? sidebarWidth + 22
+        : sidebarWidth + 34;
+
   const topPad = isMobile ? 76 : isDenseViewport ? 72 : 86;
-  const contentInset = isMobile ? 0 : isTablet ? 0 : isDenseViewport ? `clamp(72px, 5.4vw, 110px)` : `clamp(118px, 8vw, 152px)`;
-  const headerMaxWidth = isMobile
+
+  const contentInset = isMobile || isTabletAny
+    ? 0
+    : isDenseViewport
+      ? `clamp(72px, 5.4vw, 110px)`
+      : `clamp(118px, 8vw, 152px)`;
+
+  const headerMaxWidth = isMobile || isTabletAny
     ? "none"
     : isDenseViewport
       ? "min(760px, calc(100% - clamp(72px, 5.4vw, 110px)))"
       : "min(860px, calc(100% - clamp(118px, 8vw, 152px)))";
-  const statsMinWidth = isDenseViewport ? 178 : 210;
-  const commandScale = isMobile || isTablet
+
+  const statsMinWidth = isMobile ? 140 : isDenseViewport ? 178 : 210;
+
+  const commandScale = isMobile || isTabletAny
     ? 1
     : Math.min(1, Math.max(COMMAND_DESKTOP_MIN_SCALE, width / COMMAND_DESKTOP_CANVAS_WIDTH));
-  const heroTransform = COMMAND_HERO_SHIFT_X || COMMAND_HERO_SHIFT_Y
-    ? `translate(${COMMAND_HERO_SHIFT_X}px, ${COMMAND_HERO_SHIFT_Y}px)`
-    : undefined;
+
+  const heroShiftX    = isMobile || isTabletAny ? 0 : -150;
+  const heroTransform = heroShiftX !== 0
+    ? `translate(${heroShiftX}px, ${COMMAND_HERO_SHIFT_Y}px)`
+    : `translate(0px, ${COMMAND_HERO_SHIFT_Y}px)`;
+  // ─────────────────────────────────────────────────────────────────────────
 
   return (
     <motion.div
@@ -209,7 +233,7 @@ export default function HomeCommandPanel() {
           gap: 10px;
           cursor: pointer;
           transition: all .2s;
-          font-size: 17px;
+          font-size: calc(17px * var(--text-scale-tight, 1));
           font-family: monospace;
         }
         .hcp-card-btn:hover {
@@ -244,7 +268,7 @@ export default function HomeCommandPanel() {
               style={{
                 color: cyan,
                 fontFamily: "monospace",
-                fontSize: isDenseViewport ? 12 : 15,
+                fontSize: scaledPx(isDenseViewport ? 12 : 15),
                 letterSpacing: ".1em",
                 textTransform: "uppercase",
                 marginBottom: isDenseViewport ? 6 : 8,
@@ -255,7 +279,11 @@ export default function HomeCommandPanel() {
             <h1
               style={{
                 margin: 0,
-                fontSize: isDenseViewport ? "clamp(30px, 4.8vw, 46px)" : "clamp(34px, 7vw, 58px)",
+                fontSize: isMobile
+                    ? scaledClampPx(26, "8vw", 36)
+                  : isDenseViewport
+                    ? scaledClampPx(30, "4.8vw", 46)
+                    : scaledClampPx(34, "7vw", 58),
                 lineHeight: 1,
                 fontWeight: 200,
                 color: "#f0f8ff",
@@ -267,9 +295,13 @@ export default function HomeCommandPanel() {
             </h1>
             <p
               style={{
-                margin: isDenseViewport ? "8px 0 0 " : "12px 0 0 ",
+                margin: isDenseViewport ? "8px 0 0" : "12px 0 0",
                 color: "rgba(210,235,255,.76)",
-                fontSize: isDenseViewport ? "clamp(12px, 1.5vw, 14px)" : "clamp(14px, 2vw, 17px)",
+                fontSize: isMobile
+                    ? scaledClampPx(12, "3.5vw", 14)
+                  : isDenseViewport
+                    ? scaledClampPx(12, "1.5vw", 14)
+                    : scaledClampPx(14, "2vw", 17),
                 lineHeight: isDenseViewport ? 1.45 : 1.65,
                 maxWidth: width > 1600 ? 820 : 720,
               }}
@@ -285,7 +317,11 @@ export default function HomeCommandPanel() {
                 marginTop: isDenseViewport ? 10 : 16,
                 color: "rgba(210,235,255,.65)",
                 fontFamily: "monospace",
-                fontSize: isDenseViewport ? "clamp(11px, 1.4vw, 13px)" : "clamp(13px, 2vw, 17px)",
+                fontSize: isMobile
+                    ? scaledClampPx(11, "3vw", 13)
+                  : isDenseViewport
+                    ? scaledClampPx(11, "1.4vw", 13)
+                    : scaledClampPx(13, "2vw", 17),
                 lineHeight: 1.5,
               }}
             >
@@ -304,7 +340,6 @@ export default function HomeCommandPanel() {
               <span style={{ color: "rgba(210,235,255,.42)" }}>All streams synchronized.</span>
             </div>
           </div>
-
         </header>
 
         <section
@@ -319,132 +354,132 @@ export default function HomeCommandPanel() {
             const isSpeech = variant === "speech";
             const isAtmosphere = variant === "atmosphere";
             return (
-            <div
-              key={label}
-              className="hglass"
-              style={{
-                borderRadius: 14,
-                padding: isDenseViewport ? "8px 10px" : "10px 12px",
-                display: "grid",
-                gridTemplateColumns: "40px minmax(0, 1fr)",
-                gap: 12,
-                alignItems: "center",
-                minHeight: isDenseViewport ? 62 : STATS_CARD_MIN_HEIGHT,
-                background: isSpiderstroke
-                  ? "linear-gradient(145deg,rgba(48,6,12,0.9),rgba(10,10,24,0.92))"
+              <div
+                key={label}
+                className="hglass"
+                style={{
+                  borderRadius: 14,
+                  padding: isDenseViewport ? "8px 10px" : "10px 12px",
+                  display: "grid",
+                  gridTemplateColumns: "40px minmax(0, 1fr)",
+                  gap: 12,
+                  alignItems: "center",
+                  minHeight: isDenseViewport ? 62 : STATS_CARD_MIN_HEIGHT,
+                  background: isSpiderstroke
+                    ? "linear-gradient(145deg,rgba(48,6,12,0.9),rgba(10,10,24,0.92))"
                     : isSpeech
                       ? "linear-gradient(145deg,rgba(36,13,64,0.92),rgba(8,12,32,0.94))"
-                    : isAtmosphere
-                      ? "linear-gradient(135deg,rgba(92,8,18,0.95) 0%,rgba(24,16,40,0.93) 48%,rgba(5,54,76,0.92) 100%)"
-                  : undefined,
-                backgroundSize: isSpeech || isAtmosphere ? "180% 180%" : undefined,
-                border: isSpiderstroke
-                  ? "1px solid rgba(255,59,59,0.46)"
-                  : isSpeech
-                    ? "1px solid rgba(217,140,255,0.52)"
-                    : isAtmosphere
-                      ? "1px solid rgba(98,232,255,0.62)"
-                    : undefined,
-                boxShadow: isSpiderstroke
-                  ? "0 0 24px rgba(255,0,45,0.18), inset 0 1px 0 rgba(255,255,255,0.06)"
-                  : isSpeech
-                    ? "0 0 24px rgba(168,85,247,0.2), inset 0 1px 0 rgba(255,255,255,0.08)"
-                    : isAtmosphere
-                      ? "0 0 26px rgba(255,59,79,0.28), 0 0 26px rgba(98,232,255,0.24), inset 0 1px 0 rgba(255,255,255,0.08)"
-                  : undefined,
-                animation: isSpeech ? "hcp-purple-glow 3.2s ease-in-out infinite" : undefined,
-              }}
-            >
-              <div
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 12,
-                  display: "grid",
-                  placeItems: "center",
-                  background: isSpiderstroke
-                    ? "rgba(255,59,59,.12)"
-                    : isSpeech
-                      ? "linear-gradient(135deg,rgba(217,140,255,.2),rgba(104,246,255,.08))"
                       : isAtmosphere
-                        ? "linear-gradient(135deg,rgba(255,59,79,.26) 0%,rgba(98,232,255,.22) 100%)"
-                      : "rgba(104,246,255,.08)",
+                        ? "linear-gradient(135deg,rgba(92,8,18,0.95) 0%,rgba(24,16,40,0.93) 48%,rgba(5,54,76,0.92) 100%)"
+                        : undefined,
+                  backgroundSize: isSpeech || isAtmosphere ? "180% 180%" : undefined,
                   border: isSpiderstroke
-                    ? "1px solid rgba(255,59,59,.35)"
+                    ? "1px solid rgba(255,59,59,0.46)"
                     : isSpeech
-                      ? "1px solid rgba(217,140,255,.42)"
+                      ? "1px solid rgba(217,140,255,0.52)"
                       : isAtmosphere
-                        ? "1px solid rgba(98,232,255,.58)"
-                      : "1px solid rgba(104,246,255,.14)",
+                        ? "1px solid rgba(98,232,255,0.62)"
+                        : undefined,
                   boxShadow: isSpiderstroke
-                    ? "0 0 18px rgba(255,59,59,.22)"
+                    ? "0 0 24px rgba(255,0,45,0.18), inset 0 1px 0 rgba(255,255,255,0.06)"
                     : isSpeech
-                      ? "0 0 20px rgba(217,140,255,.32)"
+                      ? "0 0 24px rgba(168,85,247,0.2), inset 0 1px 0 rgba(255,255,255,0.08)"
                       : isAtmosphere
-                        ? "0 0 16px rgba(255,59,79,.34), 0 0 18px rgba(98,232,255,.32), inset 0 0 14px rgba(98,232,255,.1)"
-                      : undefined,
+                        ? "0 0 26px rgba(255,59,79,0.28), 0 0 26px rgba(98,232,255,0.24), inset 0 1px 0 rgba(255,255,255,0.08)"
+                        : undefined,
+                  animation: isSpeech ? "hcp-purple-glow 3.2s ease-in-out infinite" : undefined,
                 }}
               >
-                <Icon size={22} color={color} />
+                <div
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 12,
+                    display: "grid",
+                    placeItems: "center",
+                    background: isSpiderstroke
+                      ? "rgba(255,59,59,.12)"
+                      : isSpeech
+                        ? "linear-gradient(135deg,rgba(217,140,255,.2),rgba(104,246,255,.08))"
+                        : isAtmosphere
+                          ? "linear-gradient(135deg,rgba(255,59,79,.26) 0%,rgba(98,232,255,.22) 100%)"
+                          : "rgba(104,246,255,.08)",
+                    border: isSpiderstroke
+                      ? "1px solid rgba(255,59,59,.35)"
+                      : isSpeech
+                        ? "1px solid rgba(217,140,255,.42)"
+                        : isAtmosphere
+                          ? "1px solid rgba(98,232,255,.58)"
+                          : "1px solid rgba(104,246,255,.14)",
+                    boxShadow: isSpiderstroke
+                      ? "0 0 18px rgba(255,59,59,.22)"
+                      : isSpeech
+                        ? "0 0 20px rgba(217,140,255,.32)"
+                        : isAtmosphere
+                          ? "0 0 16px rgba(255,59,79,.34), 0 0 18px rgba(98,232,255,.32), inset 0 0 14px rgba(98,232,255,.1)"
+                          : undefined,
+                  }}
+                >
+                  <Icon size={22} color={color} />
+                </div>
+                <div>
+                  <div
+                    style={{
+                      color: isSpiderstroke
+                        ? "rgba(255,198,198,.82)"
+                        : isSpeech
+                          ? "rgba(238,214,255,.9)"
+                          : isAtmosphere
+                            ? "rgba(255,205,210,.92)"
+                            : "rgba(210,240,255,.55)",
+                      fontFamily: "monospace",
+                      fontSize: scaledPx(11),
+                      letterSpacing: ".06em",
+                      textTransform: "uppercase",
+                      fontWeight: isSpiderstroke || isSpeech || isAtmosphere ? 800 : undefined,
+                    }}
+                  >
+                    {label}
+                  </div>
+                  <div
+                    style={{
+                      color,
+                      fontSize: isMobile ? scaledClampPx(18, "5vw", 24) : scaledClampPx(20, "2vw", 28),
+                      fontWeight: 900,
+                      lineHeight: 1.1,
+                      marginTop: 6,
+                      textShadow: isSpiderstroke
+                        ? "0 0 16px rgba(255,59,59,.55)"
+                        : isSpeech
+                          ? "0 0 18px rgba(217,140,255,.72)"
+                          : isAtmosphere
+                            ? "0 0 14px rgba(255,59,79,.7), 0 0 18px rgba(98,232,255,.42)"
+                            : undefined,
+                    }}
+                  >
+                    {value}
+                  </div>
+                  <div
+                    style={{
+                      color: isSpiderstroke
+                        ? "rgba(255,230,230,.92)"
+                        : isSpeech
+                          ? "rgba(236,205,255,.92)"
+                          : isAtmosphere
+                            ? "rgba(255,226,229,.94)"
+                            : "rgba(130,255,215,.8)",
+                      fontSize: isMobile ? scaledClampPx(11, "3vw", 13) : scaledClampPx(12, "1.4vw", 16),
+                      fontWeight: isSpiderstroke || isSpeech || isAtmosphere ? 700 : undefined,
+                      marginTop: 6,
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {sub}
+                  </div>
+                </div>
               </div>
-              <div>
-                <div
-                  style={{
-                    color: isSpiderstroke
-                      ? "rgba(255,198,198,.82)"
-                      : isSpeech
-                        ? "rgba(238,214,255,.9)"
-                        : isAtmosphere
-                          ? "rgba(255,205,210,.92)"
-                        : "rgba(210,240,255,.55)",
-                    fontFamily: "monospace",
-                    fontSize: 11,
-                    letterSpacing: ".06em",
-                    textTransform: "uppercase",
-                    fontWeight: isSpiderstroke || isSpeech || isAtmosphere ? 800 : undefined,
-                  }}
-                >
-                  {label}
-                </div>
-                <div
-                  style={{
-                    color,
-                    fontSize: "clamp(20px, 2vw, 28px)",
-                    fontWeight: 900,
-                    lineHeight: 1.1,
-                    marginTop: 6,
-                    textShadow: isSpiderstroke
-                      ? "0 0 16px rgba(255,59,59,.55)"
-                      : isSpeech
-                        ? "0 0 18px rgba(217,140,255,.72)"
-                        : isAtmosphere
-                          ? "0 0 14px rgba(255,59,79,.7), 0 0 18px rgba(98,232,255,.42)"
-                        : undefined,
-                  }}
-                >
-                  {value}
-                </div>
-                <div
-                  style={{
-                    color: isSpiderstroke
-                      ? "rgba(255,230,230,.92)"
-                      : isSpeech
-                        ? "rgba(236,205,255,.92)"
-                        : isAtmosphere
-                          ? "rgba(255,226,229,.94)"
-                        : "rgba(130,255,215,.8)",
-                    fontSize: "clamp(12px, 1.4vw, 16px)",
-                    fontWeight: isSpiderstroke || isSpeech || isAtmosphere ? 700 : undefined,
-                    marginTop: 6,
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {sub}
-                </div>
-              </div>
-            </div>
             );
           })}
         </section>
@@ -463,18 +498,19 @@ export default function HomeCommandPanel() {
           <MissionTrajectory distance="3.6 กม." accuracy={Math.max(92, avgAcc)} compact={isDenseViewport} />
           <NearbyBrainHospitals compact={isDenseViewport} />
 
-          {isRoomyDesktop && <aside style={{ display: "flex", minHeight: 0 }}>
-            <div
-              className="hglass"
-              style={{
-                borderRadius: 14,
-                padding: "18px 18px",
-                flex: 1,
-                minHeight: isMobile ? 180 : "100%",
-              }}
-            />
-
-          </aside>}
+          {isRoomyDesktop && (
+            <aside style={{ display: "flex", minHeight: 0 }}>
+              <div
+                className="hglass"
+                style={{
+                  borderRadius: 14,
+                  padding: "18px 18px",
+                  flex: 1,
+                  minHeight: isMobile ? 180 : "100%",
+                }}
+              />
+            </aside>
+          )}
         </section>
 
         <section
@@ -488,7 +524,11 @@ export default function HomeCommandPanel() {
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: isMobile ? "1fr" : isDenseViewport ? "repeat(2, minmax(0, 1fr))" : "1.25fr 1fr 1fr 1fr",
+              gridTemplateColumns: isMobile || isTabletAny
+                ? "1fr"
+                : isDenseViewport
+                  ? "repeat(2, minmax(0, 1fr))"
+                  : "1.25fr 1fr 1fr 1fr",
               gap: panelGap,
               alignItems: "center",
             }}
@@ -498,7 +538,7 @@ export default function HomeCommandPanel() {
                 style={{
                   margin: "0 0 6px",
                   color: cyan,
-                  fontSize: isDenseViewport ? 15 : 18,
+                  fontSize: scaledPx(isDenseViewport ? 15 : 18),
                   textTransform: "uppercase",
                   fontFamily: "monospace",
                   letterSpacing: ".06em",
@@ -506,7 +546,7 @@ export default function HomeCommandPanel() {
               >
                 Sector 7 Diagnostics
               </h2>
-              <p style={{ margin: 0, color: "rgba(210,240,255,.55)", fontSize: isDenseViewport ? 13 : 17, lineHeight: isDenseViewport ? 1.45 : 1.65 }}>
+              <p style={{ margin: 0, color: "rgba(210,240,255,.55)", fontSize: scaledPx(isDenseViewport ? 13 : 17), lineHeight: isDenseViewport ? 1.45 : 1.65 }}>
                 Recovery systems reporting peak filtration cycles.
                 <br />
                 Neural pathways show {avgAcc}% bio-performance increase.
@@ -539,7 +579,7 @@ export default function HomeCommandPanel() {
                     border: "1px solid rgba(104,246,255,.12)",
                     display: "grid",
                     placeItems: "center",
-                    fontSize: 22,
+                    fontSize: scaledPx(22),
                     flexShrink: 0,
                   }}
                 >
@@ -548,7 +588,7 @@ export default function HomeCommandPanel() {
                 <div>
                   <div
                     style={{
-                      fontSize: isDenseViewport ? 11 : 14,
+                      fontSize: scaledPx(isDenseViewport ? 11 : 14),
                       color: "rgba(210,240,255,.5)",
                       fontFamily: "monospace",
                       textTransform: "uppercase",
@@ -556,10 +596,10 @@ export default function HomeCommandPanel() {
                   >
                     {label}
                   </div>
-                  <div style={{ fontSize: isDenseViewport ? 19 : 24, fontWeight: 800, color: color ?? cyan, lineHeight: 1.15 }}>
+                  <div style={{ fontSize: scaledPx(isDenseViewport ? 19 : 24), fontWeight: 800, color: color ?? cyan, lineHeight: 1.15 }}>
                     {value}
                   </div>
-                  <div style={{ fontSize: isDenseViewport ? 12 : 17, color: "rgba(210,240,255,.5)" }}>{sub}</div>
+                  <div style={{ fontSize: scaledPx(isDenseViewport ? 12 : 17), color: "rgba(210,240,255,.5)" }}>{sub}</div>
                 </div>
               </div>
             ))}
@@ -588,7 +628,7 @@ function MissionTrajectory({ distance, accuracy, compact = false }: { distance: 
             style={{
               margin: 0,
               color: cyan,
-              fontSize: compact ? 15 : 18,
+              fontSize: scaledPx(compact ? 15 : 18),
               textTransform: "uppercase",
               fontFamily: "monospace",
               letterSpacing: ".06em",
@@ -596,7 +636,7 @@ function MissionTrajectory({ distance, accuracy, compact = false }: { distance: 
           >
             Mission Trajectory
           </h2>
-          <p style={{ margin: "8px 0 0", color: "rgba(210,240,255,.6)", fontSize: compact ? 13 : 17, lineHeight: 1.5 }}>
+          <p style={{ margin: "8px 0 0", color: "rgba(210,240,255,.6)", fontSize: scaledPx(compact ? 13 : 17), lineHeight: 1.5 }}>
             Real-time vector analysis
           </p>
         </div>
@@ -607,7 +647,7 @@ function MissionTrajectory({ distance, accuracy, compact = false }: { distance: 
             border: "1px solid rgba(33,255,208,.25)",
             borderRadius: 8,
             padding: compact ? "5px 9px" : "6px 12px",
-            fontSize: compact ? 12 : 15,
+            fontSize: scaledPx(compact ? 12 : 15),
             fontFamily: "monospace",
           }}
         >
@@ -656,8 +696,8 @@ function MissionTrajectory({ distance, accuracy, compact = false }: { distance: 
           ["Status", "Tracking"],
         ].map(([label, value]) => (
           <div key={label}>
-            <div style={{ color: "rgba(210,240,255,.48)", fontSize: compact ? 12 : 15, marginBottom: 5 }}>{label}</div>
-            <strong style={{ color: value === "Tracking" ? mint : "#fff", fontSize: compact ? 17 : 22 }}>{value}</strong>
+            <div style={{ color: "rgba(210,240,255,.48)", fontSize: scaledPx(compact ? 12 : 15), marginBottom: 5 }}>{label}</div>
+            <strong style={{ color: value === "Tracking" ? mint : "#fff", fontSize: scaledPx(compact ? 17 : 22) }}>{value}</strong>
           </div>
         ))}
       </div>
@@ -670,7 +710,7 @@ function MissionTrajectory({ distance, accuracy, compact = false }: { distance: 
           border: "1px solid rgba(255,255,255,.06)",
           padding: compact ? "10px 12px" : "14px 15px",
           color: "rgba(210,240,255,.55)",
-          fontSize: compact ? 12 : 17,
+          fontSize: scaledPx(compact ? 12 : 17),
           lineHeight: compact ? 1.45 : 1.65,
         }}
       >

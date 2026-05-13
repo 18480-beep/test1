@@ -107,7 +107,7 @@ export default function Navigation({ activeScene, onSceneChange, onMenuOpen }: N
                 <span
                   className="tracking-wider uppercase transition-colors duration-300"
                   style={{
-                    fontSize: `calc(25 ๆpx * ${textScale})`,
+                    fontSize: `calc(11px * ${textScale})`,
                     fontFamily: "var(--font-mono)",
                     color: i === activeScene
                       ? scene.accentColor

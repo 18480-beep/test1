@@ -30,6 +30,9 @@ import StrokeChatWidget from "@/components/StrokeChatWidget";
 import HomeCommandPanel from "@/components/HomeCommandPanel";
 import NearbyBrainHospitals from "@/components/NearbyBrainHospitals";
 import SpeechSceneOverlay from "@/components/SpeechSceneOverlay";
+import { useBreakpoint } from "@/hooks/useBreakpoint";
+import { getGameButtonTune } from "@/lib/layoutTuning";
+import { clampNumber, getViewportStage } from "@/lib/viewportStage";
 
 const SCENE_TRANSITION_MS = 260;
 const WHEEL_SCENE_THRESHOLD = 60;
@@ -37,7 +40,8 @@ const WHEEL_GESTURE_IDLE_MS = 120;
 
 export default function Home() {
   const { user } = useAuth();
-  const { theme } = useTheme();
+  const { theme, textScale } = useTheme();
+  const { width, height, isMobile } = useBreakpoint();
   const [showGame, setShowGame] = useState(false);
   const [activeScene, setActiveScene] = useState(0);
   const [scrollProgress, setScrollProgress] = useState(0);
@@ -90,41 +94,86 @@ export default function Home() {
     };
   }, []);
 
-  // รับ game session result จาก iframe แล้วบันทึกลง Supabase
+  // รับ game session / speech-stage result จาก iframe แล้วบันทึกลง Supabase
   useEffect(() => {
-    const handleMessage = async (e: MessageEvent) => {
-      if (!e.data || e.data.type !== 'GAME_SESSION_END') return;
-      const d = e.data;
-      if (!d.completed) return;
-      if (!user) return;
-      try {
-        const { error } = await supabase.from('game_sessions').insert({
-          user_id: user.id,
-          played_at: new Date().toISOString(),
-          score: d.score ?? 0,
-          reps: d.reps ?? 0,
-          time_sec: d.time_sec ?? 0,
-          rank: d.rank ?? 'D',
-          accuracy: d.accuracy ?? 0,
-          completed: true,
-          mode: d.mode ?? 'standard',
-          bombs_hit: d.bombs_hit ?? 0,
-          walls_hit: d.walls_hit ?? 0,
-          miss_count: d.miss_count ?? 0,
-        });
+    const toNumber = (value: unknown, fallback = 0) => {
+      const n = Number(value);
+      return Number.isFinite(n) ? n : fallback;
+    };
 
-        if (error) {
-          console.error('[Home] Supabase insert error:', error.message);
-        } else {
-          console.log('[Home] Game session saved successfully');
-          window.dispatchEvent(new CustomEvent('game-session-saved'));
+    const saveGameSessionFromMessage = async (d: Record<string, any>) => {
+      const accuracy = toNumber(d.accuracy);
+      const reps = toNumber(d.reps ?? d.hit_count ?? d.attempted);
+      const missCount = toNumber(d.miss_count);
+      const durationSec = toNumber(d.time_sec ?? d.durationSec);
+      const score = toNumber(d.score, Math.round(accuracy));
+
+      const { error } = await supabase.rpc("save_game_session", {
+        p_game_type: String(d.game_type ?? d.mode ?? "standard"),
+        p_score: score,
+        p_duration_sec: durationSec,
+        p_hit_count: reps,
+        p_miss_count: missCount,
+        p_combo: toNumber(d.combo),
+        p_accuracy: accuracy,
+        p_left_hand_score: toNumber(d.left_hand_score),
+        p_right_hand_score: toNumber(d.right_hand_score),
+        p_response_time_ms: toNumber(d.response_time_ms),
+        p_raw_data: d.raw_data ?? d,
+      });
+
+      if (error) throw error;
+    };
+
+    const saveSpeechProgressFromMessage = async (d: Record<string, any>) => {
+      if (!d.stageId || d.completed === false) return;
+
+      const stageId = String(d.stageId);
+      const [fallbackChapter, fallbackLevel] = stageId.split("-").map((part) => Number(part));
+      const { error } = await supabase.rpc("save_speech_stage_progress", {
+        p_stage_id: stageId,
+        p_chapter_id: Number.isFinite(Number(d.chapterId)) ? Number(d.chapterId) : fallbackChapter || null,
+        p_stage_level: Number.isFinite(Number(d.stageLevel)) ? Number(d.stageLevel) : fallbackLevel || null,
+        p_stage_name: d.stageName ?? null,
+        p_stars: toNumber(d.stars),
+        p_accuracy: toNumber(d.accuracy),
+        p_raw_data: {
+          attempted: toNumber(d.attempted),
+          correct: toNumber(d.correct),
+          totalQuestions: toNumber(d.totalQuestions),
+          durationSec: toNumber(d.durationSec),
+          wordResults: d.wordResults ?? [],
+          playedAt: d.playedAt ?? new Date().toISOString(),
+        },
+      });
+
+      if (error) throw error;
+    };
+
+    const handleMessage = async (e: MessageEvent) => {
+      if (!e.data || typeof e.data !== "object") return;
+      const d = e.data as Record<string, any>;
+      if (d.type !== "GAME_SESSION_END" && d.type !== "SPEECH_STAGE_COMPLETE") return;
+      if (!user) return;
+
+      try {
+        if (d.type === "GAME_SESSION_END") {
+          if (!d.completed) return;
+          await saveGameSessionFromMessage(d);
+          window.dispatchEvent(new CustomEvent("game-session-saved"));
+        }
+
+        if (d.type === "SPEECH_STAGE_COMPLETE") {
+          await saveSpeechProgressFromMessage(d);
+          window.dispatchEvent(new CustomEvent("speech-progress-saved"));
+          window.dispatchEvent(new CustomEvent("game-session-saved"));
         }
       } catch (err) {
-        console.error('[Home] Runtime error saving game_session:', err);
+        console.error("[Home] Runtime error saving iframe result:", err);
       }
     };
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
   }, [user]);
 
   // Scroll-driven scene changes
@@ -247,6 +296,7 @@ export default function Home() {
 
   // URL ของเกมในแต่ละ scene (อ่านจาก gameButton.gameUrl ถ้ามี)
   const currentGameUrl = SCENES[activeScene]?.gameButton?.gameUrl ?? "/game/index.html";
+  const stage = getViewportStage(width, height);
 
   return (
     <div
@@ -376,7 +426,7 @@ export default function Home() {
         /* top / bottom labels */
         .hud-top-label {
           font-family: var(--font-mono, monospace);
-          font-size: 9px; letter-spacing: 0.22em;
+          font-size: calc(9px * var(--text-scale-tight, 1)); letter-spacing: 0.22em;
           color: var(--hud-c); opacity: 0.55;
           text-transform: uppercase; white-space: nowrap;
           margin-bottom: 6px;
@@ -384,7 +434,7 @@ export default function Home() {
         }
         .hud-sub-label {
           font-family: var(--font-mono, monospace);
-          font-size: 9px; letter-spacing: 0.18em;
+          font-size: calc(9px * var(--text-scale-tight, 1)); letter-spacing: 0.18em;
           color: var(--hud-c); opacity: 0.4;
           text-transform: uppercase; white-space: nowrap;
           margin-top: 7px;
@@ -458,15 +508,35 @@ export default function Home() {
         const gb = scene?.gameButton;
         if (!gb) return null;
         const col = gb.color ?? scene.accentColor;
-        const fs  = gb.fontSize  ?? 12;
+        const fs  = (gb.fontSize  ?? 12) * textScale;
         const px  = gb.paddingX  ?? 52;
         const py  = gb.paddingY  ?? 16;
         const bot = gb.y         ?? 112;
+        const tune = getGameButtonTune(scene.id, isMobile);
+        const stageScale = isMobile
+          ? clampNumber((width / 430) * tune.scale, 0.62, 0.9)
+          : clampNumber(stage.scale * tune.scale, 0.74, 1.15);
+        const anchoredLeft = (gb.x != null ? stage.x(gb.x) : width / 2) + tune.shiftX;
+        const anchoredBottom = isMobile
+          ? Math.max(70, stage.bottom(bot) + tune.shiftY)
+          : clampNumber(stage.bottom(bot) + tune.shiftY, 88, Math.max(88, height * 0.22));
+        const transform = [
+          gb.x == null ? "translateX(-50%)" : "",
+          stageScale !== 1 ? `scale(${stageScale})` : "",
+        ].filter(Boolean).join(" ");
         const posStyle: React.CSSProperties = gb.x != null
-          ? { left: gb.x, bottom: bot }
-          : { left: "50%", bottom: bot, transform: "translateX(-50%)" };
+          ? { left: anchoredLeft, bottom: anchoredBottom, transform }
+          : { left: "50%", bottom: anchoredBottom, transform };
         return (
-          <div className="fixed" style={{ ...posStyle, zIndex: 40 }}>
+          <div
+            className="fixed"
+            style={{
+              ...posStyle,
+              zIndex: 40,
+              transformOrigin: gb.x != null ? "left bottom" : "center bottom",
+              maxWidth: "calc(100vw - 32px)",
+            }}
+          >
             <div className="hud-btn-wrap">
               {gb.topLabel && (
                 <div className="hud-top-label" style={{ "--hud-c": col } as React.CSSProperties}>

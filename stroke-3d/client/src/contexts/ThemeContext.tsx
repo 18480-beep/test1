@@ -77,7 +77,10 @@ export function ThemeProvider({
   }, [theme]);
 
   useEffect(() => {
-    document.documentElement.style.setProperty("--text-scale", String(textScale));
+    const root = document.documentElement;
+    const tightScale = 1 + (textScale - 1) * 0.65;
+    root.style.setProperty("--text-scale", String(textScale));
+    root.style.setProperty("--text-scale-tight", String(tightScale));
     localStorage.setItem("stroke3d.textScale", String(textScale));
   }, [textScale]);
 

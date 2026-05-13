@@ -3,6 +3,7 @@
  * ✅ ตัวหนังสือใหญ่ขึ้นทั้ง sidebar
  * ✅ ผูก font-size กับ var(--text-scale) ทุกจุด
  * ✅ สีสวยขึ้น contrast ชัดขึ้น
+ * ✅ แก้ไข: export SIDEBAR_WIDTH ให้ useBreakpoint และ component ใช้ค่าเดียวกัน
  */
 
 import { useState, useEffect } from "react";
@@ -20,11 +21,17 @@ interface CommandSidebarProps {
 }
 
 const NAV_ITEMS = [
-  { icon: "📋", label: "หน้าแรก",   key: "log",   path: "/"      },
-  { icon: "🗺",  label: "Resource Map",  key: "map",   path: null     },
-  { icon: "👤", label: "Rehab Tracker", key: "rehab", path: "/rehab" },
-  { icon: "⚙️", label: "System Health", key: "sys",   path: null     },
+  { icon: "📋", label: "หน้าแรก",        key: "log",   path: "/"      },
+  { icon: "🗺",  label: "Resource Map",   key: "map",   path: null     },
+  { icon: "👤", label: "Rehab Tracker",  key: "rehab", path: "/rehab" },
+  { icon: "⚙️", label: "System Health",  key: "sys",   path: null     },
 ];
+
+// ✅ ค่าความกว้าง sidebar ที่ใช้ร่วมกันทั้งโปรเจกต์
+// นำ export นี้ไปใช้ใน useBreakpoint เพื่อให้ sidebarWidth ตรงกัน
+export const SIDEBAR_WIDTH_FULL = 200;
+export const SIDEBAR_WIDTH_COLLAPSED = 13;
+export const SIDEBAR_WIDTH_MOBILE = 260;
 
 export default function CommandSidebar({
   activeScene,
@@ -38,7 +45,13 @@ export default function CommandSidebar({
   const [desktopCollapsed, setDesktopCollapsed] = useState(false);
 
   const collapsed = isTablet || (isDesktop && desktopCollapsed);
-  const W = isMobile ? 260 : collapsed ? 13 : 200;
+
+  // ✅ แก้ไข: W คำนวณจากค่าคงที่ที่ export ออกไปด้วย ไม่ใช่ตัวเลขลอย
+  const W = isMobile
+    ? SIDEBAR_WIDTH_MOBILE
+    : collapsed
+      ? SIDEBAR_WIDTH_COLLAPSED
+      : SIDEBAR_WIDTH_FULL;
 
   const userName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Commander";
   const userInitials = userName.slice(0, 2).toUpperCase();

@@ -104,7 +104,7 @@ export default function TTSControlButton() {
           box-shadow: 0 4px 16px rgba(0,0,0,0.4); backdrop-filter: blur(8px);
           -webkit-backdrop-filter: blur(8px);
           display: flex; align-items: center; justify-content: center;
-          font-size: clamp(18px, 2.2vw, 22px);
+          font-size: clamp(calc(18px * var(--text-scale-tight, 1)), 2.2vw, calc(22px * var(--text-scale-tight, 1)));
           padding: 0;
           flex: 0 0 auto;
           touch-action: manipulation;
@@ -137,14 +137,14 @@ export default function TTSControlButton() {
           overscroll-behavior: contain;
         }
         @keyframes menu-slide-in { from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);} }
-        .tts-menu-item { padding: 13px 16px; border: none; background: none; color: rgba(255,255,255,0.8); cursor: pointer; width: 100%; text-align: left; font-size: 14px; line-height: 1.35; transition: all 0.2s; border-bottom: 1px solid rgba(200,150,50,0.1); font-family:'DM Sans',sans-serif; display:flex; align-items:center; gap:10px; }
+        .tts-menu-item { padding: 13px 16px; border: none; background: none; color: rgba(255,255,255,0.8); cursor: pointer; width: 100%; text-align: left; font-size: calc(14px * var(--text-scale-tight, 1)); line-height: 1.35; transition: all 0.2s; border-bottom: 1px solid rgba(200,150,50,0.1); font-family:'DM Sans',sans-serif; display:flex; align-items:center; gap:10px; }
         .tts-menu-item:last-child { border-bottom: none; }
         .tts-menu-item:hover { background: rgba(200,150,50,0.15); color: #C89632; }
         .tts-menu-item.active { background: rgba(200,150,50,0.2); color: #C89632; font-weight: 600; }
-        .tts-menu-item.primary { background: rgba(200,150,50,0.12); color: #E8B84B; font-weight: 600; font-size: 15px; }
+        .tts-menu-item.primary { background: rgba(200,150,50,0.12); color: #E8B84B; font-weight: 600; font-size: calc(15px * var(--text-scale-tight, 1)); }
         .tts-menu-item.primary:hover { background: rgba(200,150,50,0.25); }
         .tts-menu-divider { height: 1px; background: rgba(200,150,50,0.2); margin: 2px 0; }
-        .tts-menu-label { padding: 8px 14px 4px; font-size: 11px; color: rgba(200,150,50,0.6); text-transform: uppercase; letter-spacing: 0.12em; font-weight: 600; }
+        .tts-menu-label { padding: 8px 14px 4px; font-size: calc(11px * var(--text-scale-tight, 1)); color: rgba(200,150,50,0.6); text-transform: uppercase; letter-spacing: 0.12em; font-weight: 600; }
         .tts-stop-bar {
           position: absolute;
           left: calc(100% + 8px);
@@ -152,14 +152,14 @@ export default function TTSControlButton() {
           transform: translateY(-50%);
           display:flex; align-items:center; gap:8px;
           max-width: calc(100vw - var(--control-panel-left, 16px) - clamp(56px, 8vw, 68px) - max(env(safe-area-inset-right, 0px), 10px));
-          padding:6px 10px; background:rgba(200,150,50,0.1); border:1px solid rgba(200,150,50,0.3); border-radius:8px; font-size:12px; color:#C89632; cursor:pointer; transition:background 0.2s; white-space:nowrap;
+          padding:6px 10px; background:rgba(200,150,50,0.1); border:1px solid rgba(200,150,50,0.3); border-radius:8px; font-size:calc(12px * var(--text-scale-tight, 1)); color:#C89632; cursor:pointer; transition:background 0.2s; white-space:nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
         }
         .tts-stop-bar:hover { background: rgba(200,150,50,0.2); }
 
         /* ── Thai voice warning banner ── */
-        .tts-warn { padding:10px 14px; background:rgba(255,180,0,0.08); border-top:1px solid rgba(255,180,0,0.15); font-size:11px; color:rgba(255,200,80,0.7); line-height:1.5; }
+        .tts-warn { padding:10px 14px; background:rgba(255,180,0,0.08); border-top:1px solid rgba(255,180,0,0.15); font-size:calc(11px * var(--text-scale-tight, 1)); color:rgba(255,200,80,0.7); line-height:1.5; }
 
         @media (max-width: 480px) {
           .tts-menu {
@@ -168,13 +168,13 @@ export default function TTSControlButton() {
           }
           .tts-menu-item {
             padding: 12px 13px;
-            font-size: 13px;
+            font-size: calc(13px * var(--text-scale-tight, 1));
           }
           .tts-menu-item.primary {
-            font-size: 14px;
+            font-size: calc(14px * var(--text-scale-tight, 1));
           }
           .tts-warn {
-            font-size: 10.5px;
+            font-size: calc(10.5px * var(--text-scale-tight, 1));
           }
         }
       `}</style>

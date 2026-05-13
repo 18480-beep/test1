@@ -12,7 +12,7 @@
  */
 export const themeConfig = {
   // 1. ขนาดตัวอักษรเริ่มต้น (1.3 = ใหญ่กว่าปกติ 30% เหมาะกับผู้ใช้ accessibility)
-  defaultTextScale: 1.3,
+  defaultTextScale: 1.0,
 
   // 2. การตั้งค่าสีพื้นหลังรายหน้า (แก้ไขได้เอง)
   pageBg: {

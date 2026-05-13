@@ -84,9 +84,10 @@ export default function DepthMeter({ activeScene }: DepthMeterProps) {
                     opacity: i === currentDepth ? 0.8 : i < currentDepth ? 0.3 : 0.15,
                   }}
                   transition={{ duration: 0.4 }}
-                  className="text-[20px] tracking-[0.2em] uppercase"
+                  className="tracking-[0.2em] uppercase"
                   style={{
                     fontFamily: "var(--font-mono)",
+                    fontSize: "calc(15px * var(--text-scale-tight, 1))",
                     color: i === currentDepth ? accentColor : "rgb(254, 255, 255)",
                   }}
                 >

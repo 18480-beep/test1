@@ -196,7 +196,7 @@ export default function StatsPanel({ activeScene }: StatsPanelProps) {
                 color: "#00e5c0",
                 letterSpacing: "0.26em",
                 textTransform: "uppercase",
-                fontSize: 11,
+                fontSize: "calc(11px * var(--text-scale-tight, 1))",
                 fontWeight: 700,
                 marginBottom: 18,
               }}
@@ -211,13 +211,13 @@ export default function StatsPanel({ activeScene }: StatsPanelProps) {
                 { value: String(speechStats.minutes), unit: "min", label: "Time Spent" },
               ].map((stat) => (
                 <div key={stat.label} style={{ textAlign: "center" }}>
-                  <div style={{ color: "#f4f7ff", fontFamily: "var(--font-display)", fontSize: 22, fontWeight: 800, lineHeight: 1, display: "flex", justifyContent: "center", alignItems: "baseline", gap: 2 }}>
+                  <div style={{ color: "#f4f7ff", fontFamily: "var(--font-display)", fontSize: "calc(22px * var(--text-scale-tight, 1))", fontWeight: 800, lineHeight: 1, display: "flex", justifyContent: "center", alignItems: "baseline", gap: 2 }}>
                     <span>{stat.value}</span>
                     {stat.unit && (
-                      <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "rgba(220,230,255,0.66)", textTransform: "uppercase" }}>{stat.unit}</span>
+                      <span style={{ fontFamily: "var(--font-mono)", fontSize: "calc(10px * var(--text-scale-tight, 1))", color: "rgba(220,230,255,0.66)", textTransform: "uppercase" }}>{stat.unit}</span>
                     )}
                   </div>
-                  <div style={{ color: "rgba(200,215,235,0.62)", fontFamily: "var(--font-mono)", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.12em", marginTop: 7 }}>
+                  <div style={{ color: "rgba(200,215,235,0.62)", fontFamily: "var(--font-mono)", fontSize: "calc(9px * var(--text-scale-tight, 1))", textTransform: "uppercase", letterSpacing: "0.12em", marginTop: 7 }}>
                     {stat.label}
                   </div>
                 </div>
@@ -254,21 +254,21 @@ export default function StatsPanel({ activeScene }: StatsPanelProps) {
                         background: "rgba(8,10,24,0.92)",
                         color: "#fff",
                         fontFamily: "var(--font-display)",
-                        fontSize: 12,
+                        fontSize: "calc(12px * var(--text-scale-tight, 1))",
                         fontWeight: 800,
                       }}
                     >
                       {ring.value}%
                     </div>
                   </div>
-                  <div style={{ color: "rgba(235,242,255,0.72)", fontFamily: "var(--font-body)", fontSize: 11, whiteSpace: "nowrap" }}>
+                  <div style={{ color: "rgba(235,242,255,0.72)", fontFamily: "var(--font-body)", fontSize: "calc(11px * var(--text-scale-tight, 1))", whiteSpace: "nowrap" }}>
                     {ring.label}
                   </div>
                 </div>
               ))}
             </div>
 
-            <div style={{ color: "rgba(180,190,255,0.7)", fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: "0.18em", textTransform: "uppercase", marginBottom: 8 }}>
+            <div style={{ color: "rgba(180,190,255,0.7)", fontFamily: "var(--font-mono)", fontSize: "calc(10px * var(--text-scale-tight, 1))", letterSpacing: "0.18em", textTransform: "uppercase", marginBottom: 8 }}>
               Voice Frequency
             </div>
             <svg viewBox="0 0 260 78" preserveAspectRatio="none" style={{ width: "100%", height: 64, marginBottom: 16, border: "1px solid rgba(255,62,214,0.38)", background: "rgba(46,12,74,0.2)" }}>
@@ -295,7 +295,7 @@ export default function StatsPanel({ activeScene }: StatsPanelProps) {
               />
             </svg>
 
-            <div style={{ color: "rgba(180,190,255,0.7)", fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: "0.18em", textTransform: "uppercase", marginBottom: 8 }}>
+            <div style={{ color: "rgba(180,190,255,0.7)", fontFamily: "var(--font-mono)", fontSize: "calc(10px * var(--text-scale-tight, 1))", letterSpacing: "0.18em", textTransform: "uppercase", marginBottom: 8 }}>
               Progress
             </div>
             <div style={{ position: "relative", display: "flex", alignItems: "flex-end", gap: 8, height: 78, padding: "10px 6px 16px", border: "1px solid rgba(255,62,214,0.28)", background: "rgba(31,10,58,0.16)" }}>
@@ -326,10 +326,10 @@ export default function StatsPanel({ activeScene }: StatsPanelProps) {
                 />
               ))}
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", color: "rgba(220,235,255,0.46)", fontFamily: "var(--font-mono)", fontSize: 9, marginTop: 5, textAlign: "center" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", color: "rgba(220,235,255,0.46)", fontFamily: "var(--font-mono)", fontSize: "calc(9px * var(--text-scale-tight, 1))", marginTop: 5, textAlign: "center" }}>
               {[1, 2, 3, 4, 5, 6].map((week) => <span key={week}>{week}</span>)}
             </div>
-            <div style={{ marginTop: 8, color: "rgba(220,235,255,0.52)", fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: "0.08em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            <div style={{ marginTop: 8, color: "rgba(220,235,255,0.52)", fontFamily: "var(--font-mono)", fontSize: "calc(10px * var(--text-scale-tight, 1))", letterSpacing: "0.08em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
               Lv {speechStats.levelText} · {speechStats.stars} stars · {speechStats.totalAttempts} plays
             </div>
           </div>

@@ -2,7 +2,6 @@
 <html lang="th">
 <head>
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
     <meta charset="UTF-8">
@@ -4813,196 +4812,6 @@ overflow-y:auto; position:relative; z-index:1;">
         let googleUserData = null;
 const ADMIN_EMAIL = '2552shupakit@gmail.com';
 
-// ===== Supabase progress sync for the embedded speech game =====
-const SPEECH_SUPABASE_URL = 'https://cugjecldmbxxofzbbtbj.supabase.co';
-const SPEECH_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN1Z2plY2xkbWJ4eG9memJidGJqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjEzMjEsImV4cCI6MjA5MzAzNzMyMX0._Mp5qZpXeWVO8atSrpKeFvndGvMpkkk5mAEJiIqBKmQ';
-let speechSupabaseClient = null;
-let speechCurrentUser = null;
-let speechProgressSyncPromise = null;
-
-function getSpeechSupabaseClient() {
-    if (speechSupabaseClient) return speechSupabaseClient;
-    if (!window.supabase || typeof window.supabase.createClient !== 'function') {
-        console.warn('[SpeechProgress] Supabase SDK is not loaded yet.');
-        return null;
-    }
-
-    speechSupabaseClient = window.supabase.createClient(
-        SPEECH_SUPABASE_URL,
-        SPEECH_SUPABASE_ANON_KEY,
-        {
-            auth: {
-                persistSession: true,
-                autoRefreshToken: true,
-                detectSessionInUrl: false,
-                storageKey: 'stroke3d.auth.session',
-                flowType: 'pkce'
-            },
-            global: {
-                headers: { 'x-client-info': 'stroke-3d-speech-game' }
-            }
-        }
-    );
-    return speechSupabaseClient;
-}
-
-function getLocalStageProgress() {
-    try {
-        return JSON.parse(localStorage.getItem('stage_progress') || '{}') || {};
-    } catch (e) {
-        console.warn('[SpeechProgress] Invalid local stage progress:', e);
-        return {};
-    }
-}
-
-function setLocalStageProgress(progress) {
-    localStorage.setItem('stage_progress', JSON.stringify(progress || {}));
-}
-
-function mergeStageProgressEntry(current, incoming) {
-    const oldEntry = current || {};
-    const incomingStars = Number(incoming.stars || 0);
-    const oldStars = Number(oldEntry.stars || 0);
-    const incomingAcc = Number(incoming.avgAcc || incoming.best_accuracy || 0);
-    const oldAcc = Number(oldEntry.avgAcc || oldEntry.best_accuracy || 0);
-    const incomingTime = incoming.lastPlayed || incoming.last_played_at || null;
-    const oldTime = oldEntry.lastPlayed || oldEntry.last_played_at || null;
-
-    return {
-        ...oldEntry,
-        ...incoming,
-        cleared: Boolean(oldEntry.cleared || incoming.cleared),
-        stars: Math.max(oldStars, incomingStars),
-        avgAcc: Math.max(oldAcc, incomingAcc),
-        lastPlayed: incomingTime || oldTime || new Date().toISOString()
-    };
-}
-
-function updateLocalStageProgress(stageId, data) {
-    if (!stageId) return null;
-    const progress = getLocalStageProgress();
-    progress[stageId] = mergeStageProgressEntry(progress[stageId], {
-        cleared: data.cleared !== false,
-        stars: Number(data.stars || 0),
-        avgAcc: Number(data.avgAcc || data.best_accuracy || 0),
-        lastPlayed: data.lastPlayed || data.last_played_at || new Date().toISOString()
-    });
-    setLocalStageProgress(progress);
-    return progress[stageId];
-}
-
-function getStageMeta(stageId) {
-    let stage = null;
-    try {
-        const db = typeof getAdminDB === 'function' ? getAdminDB() : null;
-        stage = db?.stages?.find(s => s.id === stageId) || null;
-    } catch (e) {}
-
-    const parts = String(stageId || '').split('-');
-    return {
-        chapter_id: Number(stage?.chapter ?? parts[0]) || null,
-        stage_level: Number(stage?.level ?? parts[1]) || null,
-        stage_name: stage?.name || stageId
-    };
-}
-
-async function initSpeechCloudProgress() {
-    if (speechProgressSyncPromise) return speechProgressSyncPromise;
-
-    speechProgressSyncPromise = (async () => {
-        const client = getSpeechSupabaseClient();
-        if (!client) return null;
-
-        try {
-            const { data: sessionData, error: sessionError } = await client.auth.getSession();
-            if (sessionError) throw sessionError;
-            speechCurrentUser = sessionData?.session?.user || null;
-            if (!speechCurrentUser) {
-                console.info('[SpeechProgress] No Supabase user session found; local progress only.');
-                return null;
-            }
-
-            const { data, error } = await client
-                .from('speech_stage_progress')
-                .select('stage_id,chapter_id,stage_level,stage_name,stars,best_accuracy,cleared,last_played_at')
-                .order('last_played_at', { ascending: false });
-
-            if (error) throw error;
-
-            const progress = getLocalStageProgress();
-            (data || []).forEach(row => {
-                progress[row.stage_id] = mergeStageProgressEntry(progress[row.stage_id], {
-                    cleared: row.cleared,
-                    stars: row.stars,
-                    avgAcc: row.best_accuracy,
-                    lastPlayed: row.last_played_at
-                });
-            });
-            setLocalStageProgress(progress);
-
-            if (typeof render2DMap === 'function') {
-                const mapEl = document.getElementById('map2d-screen');
-                if (mapEl && mapEl.classList.contains('active')) render2DMap();
-            }
-            if (typeof updateDashboardUI === 'function') updateDashboardUI();
-            return data || [];
-        } catch (err) {
-            console.warn('[SpeechProgress] Cloud sync skipped:', err?.message || err);
-            return null;
-        }
-    })();
-
-    return speechProgressSyncPromise;
-}
-
-async function saveSpeechStageProgress(stageId, data = {}) {
-    if (!stageId) return;
-
-    updateLocalStageProgress(stageId, data);
-
-    const client = getSpeechSupabaseClient();
-    if (!client) return;
-
-    try {
-        if (!speechCurrentUser) {
-            const { data: sessionData } = await client.auth.getSession();
-            speechCurrentUser = sessionData?.session?.user || null;
-        }
-        if (!speechCurrentUser) return;
-
-        const meta = getStageMeta(stageId);
-        const payload = {
-            p_stage_id: stageId,
-            p_chapter_id: meta.chapter_id,
-            p_stage_level: meta.stage_level,
-            p_stage_name: meta.stage_name,
-            p_stars: Number(data.stars || 0),
-            p_accuracy: Number(data.avgAcc || data.best_accuracy || 0),
-            p_raw_data: {
-                attempted: data.attempted ?? (typeof sessionAttempted !== 'undefined' ? sessionAttempted : 0),
-                correct: data.correct ?? (typeof sessionCorrect !== 'undefined' ? sessionCorrect : 0),
-                totalQuestions: data.totalQuestions ?? null,
-                durationSec: data.durationSec ?? null,
-                completedAt: new Date().toISOString()
-            }
-        };
-
-        const { data: saved, error } = await client.rpc('save_speech_stage_progress', payload);
-        if (error) throw error;
-        const savedRow = Array.isArray(saved) ? saved[0] : saved;
-        if (savedRow) {
-            updateLocalStageProgress(stageId, {
-                cleared: savedRow.cleared,
-                stars: savedRow.stars,
-                avgAcc: savedRow.best_accuracy,
-                lastPlayed: savedRow.last_played_at
-            });
-        }
-    } catch (err) {
-        console.warn('[SpeechProgress] Save to Supabase skipped:', err?.message || err);
-    }
-}
-
 // ===== ระบบ Admin ตรวจจาก IP =====
 // ใส่ IP เครื่องคุณตรงนี้ (ดูได้จาก ipconfig หรือ whatismyip.com)
 let adminUnlocked = false; // ← ไม่อ่าน localStorage โดยตรงตอนโหลด
@@ -5933,7 +5742,6 @@ function showToast(message, type = 'info', duration = 3000) {
     document.getElementById('virtual-pet').style.display = 'flex';
     document.getElementById('dashboard-screen').classList.add('active');
     updateDashboardUI();
-    initSpeechCloudProgress();
 
     // ✅ จบ progress bar ที่ 100% ก่อน fade out
     requestAnimationFrame(() => {
@@ -6972,25 +6780,122 @@ if (roundPct >= 100 && !chartRounds.classList.contains('completed')) {
             ]
         };
 
-        
-        const roleplayScenarios = {
-            easy: [ [ {npc: "เดินชนคนอื่น", player: "ขอโทษครับ"}, {npc: "ไม่เป็นไรครับ", player: "ขอบคุณครับ"} ] ],
-            medium: [ [ {npc: "สวัสดีครับ รับอะไรดีครับ?", player: "ขอข้าวผัดจานนึงครับ"}, {npc: "ทานที่นี่หรือกลับบ้านครับ?", player: "ทานที่นี่ครับ"} ] ],
-            hard: [ [ {npc: "สวัสดีครับ รับเมนูเพิ่มมั้ยคะ?", player: "รบกวนช่วยหยิบเมนูอาหารให้ฉันดูหน่อยได้ไหมครับ"}, {npc: "รับอาหารแนะนำของทางร้านไหมคะ?", player: "คุณพอจะแนะนำร้านอาหารแถวนี้ให้ฉันได้ไหมครับ"} ] ]
-        };
-
         // วางต่อท้าย roleplayScenarios เดิม
         const englishRealSentences = {
-            easy: ["Apple", "Water", "Doctor", "Pain", "Tired", "Hungry", "Walk", "Sit", "Hot", "Cold"],
-            medium: ["I am hungry", "Can I have some water", "My head hurts", "Turn on the TV", "I need the toilet", "Please help me", "The weather is nice", "I feel cold", "Give me a tissue", "I feel better"],
-            hard: ["Could you please help me sit up on the bed", "What time will the doctor come to check on me", "My family will come to visit me tomorrow", "I really want to go home and rest", "Thank you so much for taking good care of me"]
-        };
-        
-        const roleplayScenariosEn = {
-            easy: [ [ {npc: "Bumping into someone", player: "Excuse me"}, {npc: "No problem", player: "Thank you"} ] ],
-            medium: [ [ {npc: "Hello, what would you like to order?", player: "I would like fried rice"}, {npc: "For here or to go?", player: "For here"} ] ],
-            hard: [ [ {npc: "Would you like to see the menu again?", player: "Could you please hand me the menu?"}, {npc: "Do you need any recommendations?", player: "Could you recommend a good restaurant nearby?"} ] ]
-        };
+            easy: [
+    // === 100 Words (Easy) ===
+    "hot", "cold", "sleepy", "eat", "drink", "sleep", "stand", "sit", "go", "come",
+    "stop", "open", "close", "call", "tell", "yes", "no", "ask", "get", "put",
+    "new", "old", "good", "bad", "light", "heavy", "fast", "slow", "much", "little",
+    "house", "room", "bed", "chair", "table", "door", "window", "bathroom", "kitchen", "tv",
+    "car", "book", "bag", "cup", "spoon", "fork", "plate", "bowl", "knife", "pot",
+    "father", "mother", "child", "grandfather", "grandmother", "uncle", "aunt", "brother", "sister", "friend",
+    "mouth", "hand", "leg", "head", "eye", "ear", "nose", "tooth", "tongue", "neck",
+    "morning", "late", "noon", "afternoon", "evening", "night", "today", "tomorrow", "yesterday", "now",
+    "soon", "long", "short", "often", "one", "two", "three", "four", "five", "six",
+    "seven", "eight", "nine", "ten", "dog", "cat", "bird", "fish", "pig", "cow",
+
+    // === 100 Phrases (Easy) ===
+    "water please", "eat food", "take medicine", "head aches", "sore throat", "feel hungry", "feel sleepy", "very tired", "very hot", "very cold",
+    "help me", "thank you", "excuse me", "never mind", "very good", "not good", "hurts here", "pain here", "want to eat", "want to sleep",
+    "blanket please", "turn on AC", "turn off AC", "turn on light", "turn off light", "turn on TV", "turn off TV", "raise hand", "put down hand", "wait a minute",
+    "come quickly", "slow down", "walk here", "sit down", "stand up", "lie down", "hold hands", "let go", "reach out", "nod head",
+    "yes sir", "no sir", "certainly", "cannot", "okay", "a little bit", "one more time", "enough", "less", "more",
+    "doctor coming", "nurse coming", "call child", "call doctor", "give me medicine", "change clothes", "wipe body", "take a bath", "comb hair", "brush teeth",
+    "go to toilet", "put on shoes", "take off shoes", "put on shirt", "take off shirt", "use mosquito net", "close curtain", "open curtain", "use pillow", "change position",
+    "can eat", "cannot eat", "can drink", "cannot drink", "can walk", "cannot walk", "can speak", "cannot speak", "can get up", "cannot get up",
+    "feel good", "feel bad", "feel better", "feel worse", "recovered", "still hurts", "still painful", "not recovered", "sorry", "do not know",
+    "know already", "understand", "do not understand", "say again", "speak slowly", "speak loudly", "listening", "ready", "finished", "let's go",
+
+    // === 50 Sentences (Easy) ===
+    "I am hungry.", "May I have some water?", "I am very sleepy.", "I am very tired.", "I feel better.",
+    "Please help me.", "Thank you very much.", "I have a headache.", "It hurts right here.", "I am freezing.",
+    "Can I have a blanket?", "Please turn on the light.", "Please turn off the TV.", "I want to sleep now.", "I want to eat something.",
+    "A glass of water, please.", "I feel very hot.", "I feel very cold.", "I need my medicine.", "I have pain here.",
+    "Will my child visit me?", "Is the doctor coming?", "I want to call my child.", "The weather is good today.", "I feel great today.",
+    "Please help me up.", "I need to go to the toilet.", "Can you turn on the AC?", "I took my medicine.", "I cannot sleep at all.",
+    "My leg hurts.", "I cannot walk today.", "I want to watch TV.", "I feel dizzy.", "I cannot eat anything.",
+    "Please call the doctor.", "I need some help.", "I am recovering well.", "I do not feel well today.", "I will sleep well tonight.",
+    "My back hurts a lot.", "Please hand me that.", "I want to take a bath.", "I want to brush my teeth.", "Please help me change clothes.",
+    "I want some snacks.", "I want to listen to music.", "Will my child come today?", "I miss my home.", "I want to go home."
+  ],
+
+  medium: [
+    // === 100 Words (Medium) ===
+    "attempt", "experience", "resource", "honest", "responsible", "plan", "decide", "resolve", "develop", "manage",
+    "future", "past", "present", "society", "culture", "environment", "technology", "communicate", "information", "news",
+    "benefit", "penalty", "important", "necessary", "special", "normal", "nature", "danger", "safe", "convenient",
+    "comfortable", "difficult", "complex", "simple", "diverse", "different", "similar", "alike", "change", "improve",
+    "correct", "inspect", "evaluate", "compare", "explain", "suggest", "recommend", "agree", "refuse", "accept",
+    "doubt", "believe", "expect", "disappoint", "proud", "regret", "glad", "worry", "relieved", "excited",
+    "bored", "annoyed", "angry", "forgive", "understand", "confused", "forget", "remember", "learn", "teach",
+    "practice", "patient", "diligent", "lazy", "economical", "wasteful", "health", "disease", "treat", "prevent",
+    "exercise", "rest", "food", "nutrition", "energy", "efficiency", "quality", "quantity", "price", "value",
+    "worthwhile", "loss", "profit", "business", "career", "income", "expense", "debt", "invest", "save",
+
+    // === 100 Phrases (Medium) ===
+    "time management", "teamwork", "solve immediate problems", "develop new skills", "learn from mistakes", "plan for the future", "make decisive choices", "communicate effectively", "build good relationships", "take care of your health",
+    "exercise regularly", "eat healthy food", "get enough rest", "manage stress", "find inspiration", "set life goals", "take action immediately", "never give up on obstacles", "adapt to situations", "accept others' opinions",
+    "cooperate", "highly responsible", "work hard", "succeed", "failure as a lesson", "continuous self-improvement", "update information", "utilize technology", "protect the environment", "save energy",
+    "reduce plastic use", "sort garbage", "help society", "public minded", "respect traffic rules", "follow regulations", "protect own rights", "do not violate others' rights", "social etiquette", "know the right time and place",
+    "dress appropriately", "speak politely", "respect each other", "listen attentively", "show empathy", "encourage others", "rejoice", "apologize when wrong", "forgive others", "create positive energy",
+    "think positively", "optimistic view", "avoid conflict", "compromise", "find joint solutions", "fair", "transparent", "accountable", "honest", "not cheating",
+    "keep promises", "reliable", "self-discipline", "control emotions", "financial management", "investment planning", "save for the future", "control expenses", "earn extra income", "business development",
+    "expand market", "customer service", "meet demands", "create satisfaction", "maintain standards", "increase efficiency", "reduce costs", "increase profit", "analyze data", "evaluate results",
+    "present work", "prepare reports", "planning meeting", "brainstorming", "summarize meeting", "follow up", "assess the situation", "predict the future", "prepare to cope", "fix flaws",
+    "improve process", "new innovation", "creativity", "product design", "research and development", "system testing", "actual deployment", "maintenance", "system upgrade", "data backup",
+
+    // === 50 Sentences (Medium) ===
+    "Good time management helps us achieve our goals on time.", "Teamwork requires effective communication and mutual understanding.", "We should learn from our mistakes to improve ourselves.", "Careful future planning reduces risks in life.", "Making decisive choices is an important quality of a leader.",
+    "Taking care of your health is something we should not neglect.", "We should exercise regularly to stay healthy.", "Eating healthy food helps prevent diseases.", "Getting enough rest clears the mind and prepares you for work.", "Stress management is crucial for working adults.",
+    "Setting life goals gives us direction.", "We should not give up in the face of difficulties.", "Adapting to situations helps us survive in a changing society.", "Accepting others' opinions broadens our perspective.", "Continuous self-improvement is necessary nowadays.",
+    "Using technology properly increases work efficiency.", "Protecting the environment is everyone's duty.", "We should save energy to reduce global warming.", "Being public-minded makes society a better place to live.", "Respecting rules keeps society organized.",
+    "Having social etiquette shows a sense of culture.", "We should respect each other regardless of status.", "Listening attentively shows respect for the speaker.", "Encouraging others can help them through hard times.", "Looking on the bright side makes life happier.",
+    "Avoiding conflict preserves good relationships.", "Honesty is a fundamental foundation for business.", "Self-discipline helps us steer behavior toward goals.", "Financial planning ensures stability for the future.", "Careful data analysis makes decisions more accurate.",
+    "A good presentation must be clear and easy to understand.", "Planning meetings help the team align on goals.", "Following up on operations is a key step in project management.", "Creativity drives new innovations.", "Good customer service creates satisfaction and returning clients.",
+    "Preparing for problems in advance minimizes damage.", "Maintaining production standards is vital for building trust.", "Learning foreign languages opens new opportunities in life.", "Reading books broadens horizons and increases knowledge.", "Traveling recharges energy and inspires new ideas.",
+    "Risk management helps businesses run smoothly.", "Networking is beneficial for career growth.", "Cooperating with others gets work done faster.", "Handling criticism mindfully helps us improve.", "Balancing work and personal life is essential.",
+    "Media literacy prevents us from falling for fake news.", "Respecting cultural diversity reduces social conflict.", "Helping the weak creates a supportive society.", "Lifelong learning is the key to future success.", "Enjoying the little things makes life more meaningful."
+  ],
+
+  hard: [
+    // === 100 Words (Hard) ===
+    "explanation", "logic", "ontology", "innovation", "integration", "dynamics", "relativity", "paradigm", "aesthetics", "critique",
+    "defendant", "judgment", "appeal", "petition", "constitution", "legislative", "executive", "judiciary", "sovereignty", "independence",
+    "philosophy", "theory", "hypothesis", "inference", "induction", "deduction", "phenomenon", "plaintiff", "synthesis", "analysis",
+    "judgment", "realize", "manifest", "sagacious", "intellect", "attitude", "vision", "mission", "strategy", "tactics",
+    "measure", "policy", "concession", "monopoly", "demand", "supply", "inflation", "deflation", "equilibrium", "macroeconomics",
+    "microeconomics", "commerce", "industry", "agriculture", "handicraft", "logistics", "infrastructure", "telecommunications", "architecture", "engineering",
+    "biology", "physics", "chemistry", "astronomy", "geology", "meteorology", "ecology", "interdisciplinary", "informatics", "telemetry",
+    "artificial intelligence", "algorithm", "blockchain", "quantum", "cyber", "digital", "analog", "abstract", "concrete", "truth",
+    "ultimate reality", "impermanence", "suffering", "non-self", "noble truth", "path", "nirvana", "defilement", "craving", "attachment",
+    "fabrication", "consciousness", "mentality-materiality", "six sense bases", "contact", "feeling", "becoming", "birth", "aging", "death",
+
+    // === 100 Phrases (Hard) ===
+    "cross-disciplinary integration", "constructive criticism", "in-depth data analysis", "synthesizing new knowledge", "environmental impact assessment", "human resource management", "corporate strategic planning", "driving public policy", "educational system reform", "capacity building",
+    "sustainable development", "reducing social inequality", "promoting good governance", "anti-corruption efforts", "human rights protection", "poverty alleviation", "tackling climate change", "digital transformation", "applying advanced technology", "business innovation creation",
+    "experimental research and development", "intellectual property management", "complying with international obligations", "free trade agreement negotiations", "legal dispute mediation", "statutory interpretation", "judicial ruling", "maintaining national security", "promoting diplomatic relations", "cultural exchange learning",
+    "historical heritage conservation", "restoring degraded ecosystems", "enterprise risk management", "investment cost-benefit assessment", "cost structure analysis", "macroeconomic trend forecasting", "state market intervention", "fair income distribution", "progressive taxation", "national budget preparation",
+    "agency transparency audit", "leadership capacity building", "workplace motivation creation", "performance evaluation", "organizational conflict management", "building strong corporate culture", "paradigm shift", "breaking traditional frameworks", "critical thinking and complex problem solving", "systems thinking",
+    "strategic thinking", "cross-cultural communication", "global citizenship", "self-awareness", "emotional and behavioral management", "emotional intelligence building", "promoting mental well-being", "mental health problem prevention", "rehabilitation therapy", "advanced clinical research",
+    "ethical human experimentation", "genetic modification", "stem cell cloning", "deep space exploration", "extraterrestrial settlement", "unlocking universe secrets", "understanding quantum theory", "artificial intelligence development", "mathematical modeling", "advanced data encryption",
+    "cyber threat protection", "personal data protection", "technology usage regulation", "ethical awareness creation", "corporate social responsibility", "creating shared value", "balancing profit and society", "social investment", "social entrepreneurship", "driving circular economy",
+    "striving for zero emissions", "full-scale renewable energy use", "eco-friendly product design", "product life cycle assessment", "supply chain management", "origin traceability audit", "international standard certification", "regulatory compliance", "coping with volatility", "adaptive crisis response",
+    "building business resilience", "business continuity planning", "stakeholder analysis", "fostering public participation", "public data disclosure", "promoting freedom of expression", "respecting diversity", "creating an inclusive society", "promoting gender equality", "peace and harmony building",
+
+    // === 50 Sentences (Hard) ===
+    "Cross-disciplinary knowledge integration is absolutely necessary to tackle the complex challenges of the 21st century.", "The transition to a digital economy requires organizations to radically shift their operational paradigms and strategies.", "Effective public policy should be based on empirical data analysis and comprehensive impact assessments.", "Building environmental awareness is a fundamental pillar for driving society towards sustainable development.", "Social and economic inequality poses a major obstacle that undermines the country's long-term developmental potential.",
+    "Educational system reform must prioritize developing critical thinking and complex problem-solving skills over rote memorization.", "Good governance and transparency are crucial factors in building confidence and attracting foreign investment.", "Tackling climate change requires international cooperation and strict adherence to global obligations.", "Protecting human rights and promoting equality are indicators of a society's civilizational progress.", "Applying artificial intelligence must go hand in hand with establishing ethical frameworks to prevent potential negative impacts.",
+    "Business innovation not only creates competitive advantages but must also address social and environmental sustainability.", "Human resource management in a dynamic era must emphasize lifelong learning and continuous reskilling.", "Quantum theory has revolutionized our understanding of the physical laws governing the universe's micro-structure.", "Cost structure analysis and investment cost-benefit evaluation are at the heart of financial strategic planning.", "Circular economy mechanisms focus on maximizing resource efficiency and minimizing waste generation.",
+    "Protecting personal data in the cyber age is a challenge that demands rigorous legal and technological measures.", "International trade negotiations often involve compromising national interests and navigating complex legal stipulations.", "Global financial market volatility directly impacts monetary policy and the maintenance of macroeconomic stability.", "Conserving cultural heritage is more than preserving structures; it includes passing down traditional wisdom and ways of life.", "Creating contemporary architecture must blend aesthetics with functionality and responsiveness to the ecological context.",
+    "An organization's success during a crisis depends on its agility to adapt and its resilience in handling uncertainty.", "In-depth consumer behavior analysis is key to designing products and experiences that truly fulfill demands.", "An effective legislative system must reflect the will of the people and have appropriate checks and balances.", "Unlocking the secrets of the human genome opens doors to personalized medical advancements and genetic disease treatments.", "Future extraterrestrial settlements require the development of advanced engineering technologies and perfect life support systems.",
+    "International relations in the globalization era are driven by complex networks of economic interconnectivity and mutual interests.", "Building sustainable peace must start from resolving conflicts at their root causes and fostering mutual understanding between diverse groups.", "Product life cycle assessment allows us to visualize environmental impacts at every stage, from raw material extraction to disposal.", "Fair income distribution policies are vital for creating social stability and reducing structural poverty.", "Frontier research often faces the risk of failure but is the wellspring of discoveries that reshape human history.",
+    "An interdisciplinary approach is essential for understanding phenomena that cannot be explained by the knowledge of a single discipline alone.", "Interpreting constitutional provisions must consider the original intent alongside contextual adjustments to changing social conditions.", "State market interventions should be used cautiously to avoid distorting price mechanisms and creating inefficient resource allocation.", "Sustainable community development must adhere to the principles of public participation and grassroots capacity building.", "Existentialist philosophy urges humans to realize their freedom of choice and responsibility for defining their own life's meaning.",
+    "Understanding the dynamics of social change requires historical perspectives and class structure analysis.", "Economic crises often act as catalysts for structural reforms and the creation of more robust risk prevention mechanisms.", "Promoting emotional intelligence in childhood is a crucial foundation for developing social skills and managing stress in the future.", "Neural network architectures are designed by simulating the human brain to enhance machine learning capabilities.", "Strategic intellectual property management is a vital tool for protecting innovations and generating commercial revenue.",
+    "Effective cross-cultural communication requires open-mindedness and the reduction of ethnic prejudices.", "Applying behavioral economics concepts allows policymakers to effectively predict and guide citizens' decision-making.", "Modern telecommunications infrastructure acts as a catalyst for economic growth and distributing information access opportunities.", "Judicial proceedings must operate on the presumption of innocence and the establishment of facts beyond a reasonable doubt.", "Understanding disease mechanisms at the molecular level is a major step toward developing effective targeted therapies with fewer side effects.",
+    "Ecosystems with high biodiversity exhibit greater resistance to change and recover better from natural disasters.", "Designing digital marketing strategies must prioritize creating interactions that align with the consumer's decision-making journey.", "Balancing freedom of expression with the prevention of misinformation is a challenging task in the social media era.", "Solving non-traditional security issues requires integrating bilateral and multilateral cooperation to counter transnational threats.", "Recognizing the limitations of mainstream conceptual frameworks is the starting point for questioning and seeking alternative new paradigms."
+  ]
+};
 
         // 🏥 ระบบฐานข้อมูลคำแนะนำกายภาพบำบัดสำหรับผู้ป่วย (Stroke Physical Speech Mapping)
         const THAI_PHONETIC_THERAPY_DB = [
@@ -7279,6 +7184,65 @@ document.getElementById('session-progress-bar').style.display = isTrainingMode ?
         }
 
         // ✅ แทนที่ stopGame() เดิม
+function getCurrentStageMeta(stageId) {
+  try {
+    const db = getAdminDB();
+    const stage = db && db.stages ? db.stages.find(s => s.id === stageId) : null;
+    return {
+      chapterId: stage ? Number(stage.chapter) : Number(String(stageId || '').split('-')[0]) || null,
+      stageLevel: stage ? Number(stage.level) : Number(String(stageId || '').split('-')[1]) || null,
+      stageName: stage ? stage.name : null,
+    };
+  } catch(e) {
+    return {
+      chapterId: Number(String(stageId || '').split('-')[0]) || null,
+      stageLevel: Number(String(stageId || '').split('-')[1]) || null,
+      stageName: null,
+    };
+  }
+}
+
+function reportSpeechStageResult({ avgAcc, elapsedSecs, totalQuestions, isIncomplete }) {
+  const stageId = sessionStorage.getItem('current_stage_id');
+  if (!stageId || sessionAttempted <= 0) return;
+
+  const stars = isIncomplete ? 0 : (avgAcc >= 75 ? 3 : avgAcc >= 50 ? 2 : 1);
+  const meta = getCurrentStageMeta(stageId);
+  const payload = {
+    type: 'SPEECH_STAGE_COMPLETE',
+    completed: !isIncomplete,
+    stageId,
+    chapterId: meta.chapterId,
+    stageLevel: meta.stageLevel,
+    stageName: meta.stageName,
+    stars,
+    accuracy: avgAcc,
+    attempted: sessionAttempted,
+    correct: sessionCorrect,
+    totalQuestions,
+    durationSec: elapsedSecs,
+    wordResults,
+    playedAt: new Date().toISOString(),
+  };
+
+  try {
+    window.parent.postMessage(payload, '*');
+    window.parent.postMessage({
+      type: 'GAME_SESSION_END',
+      completed: true,
+      game_type: 'speech_training',
+      mode: 'speech_training',
+      score: avgAcc,
+      reps: sessionAttempted,
+      accuracy: avgAcc,
+      rank: avgAcc >= 90 ? 'S' : avgAcc >= 75 ? 'A' : avgAcc >= 50 ? 'B' : 'C',
+      time_sec: elapsedSecs,
+      miss_count: Math.max(0, sessionAttempted - sessionCorrect),
+      raw_data: payload,
+    }, '*');
+  } catch(e) {}
+}
+
 function stopGame() {
     // ปิดและรีเซ็ต Combo Badge เมื่อจบเกม
   const comboBadge = document.getElementById('combo-badge');
@@ -7319,6 +7283,12 @@ sessionStorage.setItem('cert_attempted', sessionAttempted);
     return 0;
   })();
   const _isIncomplete = _totalQuestions > 0 && sessionAttempted < _totalQuestions;
+  reportSpeechStageResult({
+    avgAcc,
+    elapsedSecs,
+    totalQuestions: _totalQuestions,
+    isIncomplete: _isIncomplete,
+  });
 
   document.getElementById('rep-total').innerText   = sessionAttempted;
   document.getElementById('rep-correct').innerText = sessionCorrect;
@@ -7333,14 +7303,11 @@ if (breakdownEl && wordResults.length > 0) {
 
   // ถ้าอ่านครบทุกคำถึงจะบันทึกดาว
   if (_stageId && !_isIncomplete) {
-    saveSpeechStageProgress(_stageId, {
-      stars: earnedStars,
-      avgAcc,
-      attempted: sessionAttempted,
-      correct: sessionCorrect,
-      totalQuestions: _totalQuestions,
-      durationSec: elapsedSecs
-    });
+    const _prog = JSON.parse(localStorage.getItem('stage_progress') || '{}');
+    if (!_prog[_stageId] || earnedStars > (_prog[_stageId].stars || 0)) {
+      _prog[_stageId] = { stars: earnedStars, cleared: true, avgAcc, lastPlayed: new Date().toISOString() };
+      localStorage.setItem('stage_progress', JSON.stringify(_prog));
+    }
   }
 
   // แสดงแบนเนอร์เตือนถ้ายังอ่านไม่ครบ
@@ -7460,17 +7427,22 @@ if (_isTrainingModeReport) {
 }; // ← กลับไปเดินต่อ!
       const stageId = sessionStorage.getItem('current_stage_id');
   if (stageId && sessionAttempted > 0) {
+    const progress = JSON.parse(localStorage.getItem('stage_progress') || '{}');
     const avgAcc = sessionAttempted > 0
       ? Math.round(accumulatedAccuracy / sessionAttempted) : 0;
 
     const stars = avgAcc >= 75 ? 3 : avgAcc >= 50 ? 2 : 1;
-    saveSpeechStageProgress(stageId, {
-      stars,
-      avgAcc,
-      attempted: sessionAttempted,
-      correct: sessionCorrect,
-      durationSec: elapsedSecs
-    });
+    const cleared = true;
+
+    if (!progress[stageId] || stars > (progress[stageId].stars || 0)) {
+      progress[stageId] = {
+        stars,
+        cleared,
+        avgAcc,
+        lastPlayed: new Date().toISOString()
+      };
+      localStorage.setItem('stage_progress', JSON.stringify(progress));
+    }
   }
     };         // ← ปิด continueMapBtn.onclick
               
@@ -7874,7 +7846,7 @@ setMicState(true); // ✅ เปิดไมค์ทันที ไม่ dela
                         }
                     }
 
-                    // ✅ interim debounce สั้นลง 300ms (จาก 700ms)
+                    // ✅ interim debounce 800ms — รอผู้ใช้พูดจบก่อน (ป้องกันตรวจกลางคำ)
                     clearTimeout(_interimDebounceTimer);
                     clearTimeout(window._silenceTimer);
                     _interimDebounceTimer = setTimeout(function() {
@@ -7886,17 +7858,21 @@ setMicState(true); // ✅ เปิดไมค์ทันที ไม่ dela
                             clearTimeout(speakTimeout);
                             analyzeSpeechFinal(txt);
                         }
-                    }, 300); // ✅ ลดจาก 700ms → 300ms
+                    }, 800); // ✅ เพิ่มจาก 300ms → 800ms รอพูดจบก่อนค่อยตรวจ
                 }
 
-                // ── ถ้ามี final → ยิงทันที ──
+                // ── ถ้ามี final → รอ 300ms ก่อน เผื่อผู้ใช้ยังพูดต่ออยู่ ──
                 if (finalTranscript.trim() !== '') {
-                    clearTimeout(speakTimeout);
-                    clearTimeout(window._silenceTimer);
                     clearTimeout(_interimDebounceTimer);
-                    _lastInterim = '';
-                    _interimAccum = '';
-                    analyzeSpeechFinal(finalTranscript.trim()); // ✅ ยิงทันที 0ms delay
+                    clearTimeout(window._silenceTimer);
+                    const _finalText = finalTranscript.trim();
+                    _interimDebounceTimer = setTimeout(function() {
+                        if (!shouldListen || isProcessingResult) return;
+                        _lastInterim = '';
+                        _interimAccum = '';
+                        clearTimeout(speakTimeout);
+                        analyzeSpeechFinal(_finalText); // ✅ delay 300ms เผื่อพูดต่ออีก
+                    }, 300);
                 }
             };
 
@@ -7915,7 +7891,7 @@ setMicState(true); // ✅ เปิดไมค์ทันที ไม่ dela
                 clearTimeout(window._speedWarnTimer);
                 const _warnEl = document.getElementById('speed-warning');
                 if (_warnEl) _warnEl.style.display = 'none';
-                // ✅ ลด silence timer 150ms (จาก 500ms) เพื่อตอบสนองทันทีที่หยุดพูด
+                // ✅ silence timer 400ms — รอยืนยันว่าหยุดพูดแล้วจริงๆ
                 if (shouldListen && !isProcessingResult) {
                     clearTimeout(_interimDebounceTimer);
                     clearTimeout(window._silenceTimer);
@@ -7928,7 +7904,7 @@ setMicState(true); // ✅ เปิดไมค์ทันที ไม่ dela
                             clearTimeout(speakTimeout);
                             analyzeSpeechFinal(txt);
                         }
-                    }, 150); // ✅ ลดจาก 500ms → 150ms
+                    }, 400); // ✅ เพิ่มจาก 150ms → 400ms รอยืนยันว่าหยุดพูดจริง
                 }
             };
 
@@ -10374,7 +10350,7 @@ const STAGE_ICONS = {
 };
 
 function getStageStatus(stageId) {
-  const prog = getLocalStageProgress();
+  const prog = JSON.parse(localStorage.getItem('stage_progress') || '{}');
   return {
     cleared: prog[stageId]?.cleared || false,
     stars:   prog[stageId]?.stars   || 0

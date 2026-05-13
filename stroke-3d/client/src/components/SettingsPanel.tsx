@@ -100,21 +100,21 @@ export default function SettingsPanel() {
           width: 52px; height: 52px; border-radius: 999px;
           background: linear-gradient(135deg, #4d9fff, #a06bff);
           display: flex; align-items: center; justify-content: center;
-          font-size: 20px; font-weight: 700; color: #fff;
+          font-size: calc(20px * var(--text-scale-tight, 1)); font-weight: 700; color: #fff;
           flex-shrink: 0;
           border: 2px solid rgba(255,255,255,0.15);
           overflow: hidden;
         }
         .sp-avatar img { width: 100%; height: 100%; object-fit: cover; }
-        .sp-name { font-size: 15px; font-weight: 700; color: #fff; line-height: 1.3; }
-        .sp-email { font-size: 11px; color: rgba(180,205,240,0.65); margin-top: 2px; word-break: break-all; }
+        .sp-name { font-size: calc(15px * var(--text-scale-tight, 1)); font-weight: 700; color: #fff; line-height: 1.3; }
+        .sp-email { font-size: calc(11px * var(--text-scale-tight, 1)); color: rgba(180,205,240,0.65); margin-top: 2px; word-break: break-all; }
         .sp-badge {
           display: inline-flex; align-items: center; gap: 4px;
           margin-top: 5px;
           padding: 2px 8px; border-radius: 999px;
           background: rgba(255,255,255,0.07);
           border: 1px solid rgba(255,255,255,0.12);
-          font-size: 10px; color: rgba(180,205,240,0.8);
+          font-size: calc(10px * var(--text-scale-tight, 1)); color: rgba(180,205,240,0.8);
         }
 
         .sp-body { padding: 14px 18px 6px; }
@@ -134,12 +134,12 @@ export default function SettingsPanel() {
           text-align: center;
         }
         .sp-stat-val {
-          font-size: 18px; font-weight: 700;
+          font-size: calc(18px * var(--text-scale-tight, 1)); font-weight: 700;
           font-family: var(--font-display, monospace);
           color: var(--foreground); line-height: 1;
         }
         .sp-stat-label {
-          font-size: 9px; color: var(--muted-foreground);
+          font-size: calc(9px * var(--text-scale-tight, 1)); color: var(--muted-foreground);
           margin-top: 4px; letter-spacing: .06em; text-transform: uppercase;
         }
 
@@ -155,8 +155,8 @@ export default function SettingsPanel() {
           display: flex; align-items: center; justify-content: space-between;
           padding: 8px 0; gap: 10px;
         }
-        .sp-row-label { font-size: 13px; color: rgba(200,220,245,0.85); }
-        .sp-row-sub { font-size: 10px; color: rgba(150,180,220,0.45); margin-top: 1px; }
+        .sp-row-label { font-size: calc(13px * var(--text-scale-tight, 1)); color: rgba(200,220,245,0.85); }
+        .sp-row-sub { font-size: calc(10px * var(--text-scale-tight, 1)); color: rgba(150,180,220,0.45); margin-top: 1px; }
 
         /* Toggle */
         .sp-toggle {
@@ -179,7 +179,7 @@ export default function SettingsPanel() {
           width: 30px; height: 30px; border-radius: 8px;
           display: inline-flex; align-items: center; justify-content: center;
           background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
-          color: #fff; cursor: pointer; font-size: 12px; font-weight: 600;
+          color: #fff; cursor: pointer; font-size: calc(12px * var(--text-scale-tight, 1)); font-weight: 600;
         }
         .sp-size-btn:hover { background: rgba(255,255,255,0.12); }
 
@@ -202,7 +202,7 @@ export default function SettingsPanel() {
           border-radius: 10px;
           background: rgba(255,60,60,0.08);
           border: 1px solid rgba(255,60,60,0.2);
-          color: #ff7070; font-size: 13px; font-weight: 600;
+          color: #ff7070; font-size: calc(13px * var(--text-scale-tight, 1)); font-weight: 600;
           cursor: pointer; transition: background .2s;
           display: flex; align-items: center; justify-content: center; gap: 6px;
         }
@@ -215,7 +215,7 @@ export default function SettingsPanel() {
           border-radius: 10px;
           background: transparent;
           border: 1px solid rgba(255,60,60,0.12);
-          color: rgba(255,100,100,0.5); font-size: 12px; font-weight: 500;
+          color: rgba(255,100,100,0.5); font-size: calc(12px * var(--text-scale-tight, 1)); font-weight: 500;
           cursor: pointer; transition: all .2s;
           display: flex; align-items: center; justify-content: center; gap: 5px;
           letter-spacing: .02em;
@@ -250,14 +250,14 @@ export default function SettingsPanel() {
           to   { opacity: 1; transform: scale(1) translateY(0); }
         }
         .sp-delete-icon {
-          font-size: 40px; line-height: 1; margin-bottom: 14px;
+          font-size: calc(40px * var(--text-scale-tight, 1)); line-height: 1; margin-bottom: 14px;
         }
         .sp-delete-title {
-          font-size: 17px; font-weight: 700; color: #ff6b6b;
+          font-size: calc(17px * var(--text-scale-tight, 1)); font-weight: 700; color: #ff6b6b;
           margin-bottom: 8px;
         }
         .sp-delete-desc {
-          font-size: 13px; color: rgba(200,210,230,0.7);
+          font-size: calc(13px * var(--text-scale-tight, 1)); color: rgba(200,210,230,0.7);
           line-height: 1.6; margin-bottom: 22px;
         }
         .sp-delete-desc strong { color: rgba(255,120,120,0.9); }
@@ -269,7 +269,7 @@ export default function SettingsPanel() {
           border-radius: 10px;
           background: rgba(255,255,255,0.07);
           border: 1px solid rgba(255,255,255,0.12);
-          color: rgba(200,220,245,0.85); font-size: 13px; font-weight: 600;
+          color: rgba(200,220,245,0.85); font-size: calc(13px * var(--text-scale-tight, 1)); font-weight: 600;
           cursor: pointer; transition: background .2s;
         }
         .sp-delete-cancel:hover { background: rgba(255,255,255,0.12); }
@@ -278,7 +278,7 @@ export default function SettingsPanel() {
           border-radius: 10px;
           background: rgba(220,40,40,0.15);
           border: 1px solid rgba(220,40,40,0.4);
-          color: #ff6b6b; font-size: 13px; font-weight: 700;
+          color: #ff6b6b; font-size: calc(13px * var(--text-scale-tight, 1)); font-weight: 700;
           cursor: pointer; transition: background .2s;
         }
         .sp-delete-confirm:hover { background: rgba(220,40,40,0.28); }
@@ -288,7 +288,7 @@ export default function SettingsPanel() {
 
         /* join date */
         .sp-join {
-          text-align: center; font-size: 10px;
+          text-align: center; font-size: calc(10px * var(--text-scale-tight, 1));
           color: rgba(150,180,220,0.3);
           padding-bottom: 14px;
           letter-spacing: .04em;
@@ -322,7 +322,7 @@ export default function SettingsPanel() {
           {avatar
             ? <img src={avatar} alt={name} />
             : avatarDisplay
-              ? <span style={{ fontSize: 22, lineHeight: 1 }}>{avatarDisplay}</span>
+              ? <span style={{ fontSize: "calc(22px * var(--text-scale-tight, 1))", lineHeight: 1 }}>{avatarDisplay}</span>
               : initial
           }
         </button>
@@ -336,7 +336,7 @@ export default function SettingsPanel() {
                 {avatar
                   ? <img src={avatar} alt={name} />
                   : avatarDisplay
-                    ? <span style={{ fontSize: 26, lineHeight: 1 }}>{avatarDisplay}</span>
+                    ? <span style={{ fontSize: "calc(26px * var(--text-scale-tight, 1))", lineHeight: 1 }}>{avatarDisplay}</span>
                     : initial
                 }
               </div>
@@ -376,7 +376,7 @@ export default function SettingsPanel() {
               {/* Best streak sub-row */}
               {streak.longest_streak > 0 && (
                 <div style={{
-                  textAlign: "center", fontSize: 10,
+                  textAlign: "center", fontSize: "calc(10px * var(--text-scale-tight, 1))",
                   color: "rgba(150,180,220,0.4)",
                   marginBottom: 10, marginTop: -4,
                 }}>
@@ -404,7 +404,7 @@ export default function SettingsPanel() {
                 <div className="sp-row-label">Text Size</div>
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                   <button className="sp-size-btn" onClick={() => setTextScale(Math.max(0.85, +(textScale - 0.05).toFixed(2)))}>A−</button>
-                  <span style={{ fontSize: 12, opacity: 0.7, minWidth: 36, textAlign: "center" }}>
+                  <span style={{ fontSize: "calc(12px * var(--text-scale-tight, 1))", opacity: 0.7, minWidth: 36, textAlign: "center" }}>
                     {Math.round(textScale * 100)}%
                   </span>
                   <button className="sp-size-btn" onClick={() => setTextScale(Math.min(1.5, +(textScale + 0.05).toFixed(2)))}>A+</button>
@@ -486,7 +486,7 @@ export default function SettingsPanel() {
                 borderRadius: 8,
                 padding: "8px 12px",
                 marginBottom: 12,
-                fontSize: 12,
+                fontSize: "calc(12px * var(--text-scale-tight, 1))",
                 color: "#ff8080",
                 textAlign: "left",
                 lineHeight: 1.5,
