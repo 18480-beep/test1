@@ -149,7 +149,7 @@ export default function ECGPulse({ activeScene }: ECGPulseProps) {
     <canvas
       ref={canvasRef}
       className="fixed bottom-0 pointer-events-none"
-      style={{ zIndex: 8, opacity: 0.1, left: 0, right: 0, width: "100vw" }}
+      style={{ zIndex: 8, opacity: 12, left: 0, right: 0, width: "100vw" }}
     />
   );
 }
