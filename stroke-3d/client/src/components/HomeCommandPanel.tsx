@@ -532,8 +532,8 @@ export default function HomeCommandPanel() {
         <section
           className="hglass"
           style={{
-            borderRadius: 14,
-            padding: "20px 24px",
+            borderRadius: 30,
+            padding: "0.1px 20px",
             marginLeft: contentInset,
           }}
         >
