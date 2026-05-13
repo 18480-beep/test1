@@ -943,14 +943,14 @@ function getRatios(lm){
 }
 
 const FACE_CHECKS = {
-  smile:     r => r.smile_ratio > 5.3,
+  smile:     r => r.smile_ratio > 5.0,
   open:      r => r.open_ratio  >  0.3,
   brow:      r => r.brow_ratio  >  0.34,
   purse:     r => r.purse_ratio >  0.4 && r.smile_ratio < 2.0 && r.open_ratio < 0.030
 }
 
 const FACE_DEBUG = {
-  smile:     { label:"smile_ratio", threshold:"> 5.3"            },
+  smile:     { label:"smile_ratio", threshold:"> 5.0"            },
   open:      { label:"open_ratio",  threshold:"> 0.3"            },
   brow:      { label:"brow_ratio",  threshold:"> 0.34"           },
   purse:     { label:"purse_ratio", threshold:">0.4 & smile<2.0" }
@@ -1013,10 +1013,10 @@ function onYouTubeIframeAPIReady(){ ytAPIReady = true }
 //  FACE GAME POOL (for random interrupts)
 // ═══════════════════════════════════════════════════════
 const FG_POOL = [
-  { action:"smile",  title:"ยิ้มสิ!",      desc:"ยิ้มให้กว้างที่สุด แล้วค้างไว้",    emoji:"😁", holdSec:3, rounds:5 },
-  { action:"open",   title:"อ้าปากกว้าง!", desc:"อ้าปากให้สุด แล้วค้างไว้",         emoji:"😮", holdSec:3, rounds:5 },
-  { action:"brow",   title:"เลิกคิ้ว!",    desc:"เลิกคิ้วทั้งสองข้างให้สูงที่สุด",  emoji:"🤨", holdSec:3, rounds:5 },
-  { action:"purse",  title:"ทำปากจู๋!",    desc:"ทำปากจู๋ อย่าอ้าปาก แล้วค้างไว้", emoji:"😗", holdSec:3, rounds:5 },
+  { action:"smile",  title:"ยิ้มกว้างที่สุดเห็นฟัน! (ใบหน้าต้องเต็มกรอบเท่านั้นห้ามมีช่องว่างเยอะ)",      desc:"ยิ้มให้กว้างที่สุด แล้วค้างไว้",    emoji:"😁", holdSec:3, rounds:5 },
+  { action:"open",   title:"อ้าปากกว้างที่สุด!(ใบหน้าต้องเต็มกรอบเท่านั้นห้ามมีช่องว่างเยอะ)", desc:"อ้าปากให้สุด แล้วค้างไว้",         emoji:"😮", holdSec:3, rounds:5 },
+  { action:"brow",   title:"ยกคิ้วขึ้นสูงที่สุด!(ใบหน้าต้องเต็มกรอบเท่านั้นห้ามมีช่องว่างเยอะ)",    desc:"เลิกคิ้วทั้งสองข้างให้สูงที่สุด",  emoji:"🤨", holdSec:3, rounds:5 },
+  { action:"purse",  title:"ทำปากจู๋!(ใบหน้าต้องเต็มกรอบเท่านั้นห้ามมีช่องว่างเยอะ)",    desc:"ทำปากจู๋ อย่าอ้าปาก แล้วค้างไว้", emoji:"😗", holdSec:3, rounds:5 },
 ]
 
 function pickRandomFG(excludeAction){
