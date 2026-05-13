@@ -19,7 +19,6 @@ import RehabHome from "./pages/RehabHome";
 import Login from "./pages/Login";
 import AuthCallback from "./pages/authCallback";
 import SetupProfile from "./pages/SetupProfile";
-import SettingsPanel from "./components/SettingsPanel";
 import UserSettingsSync from "./components/UserSettingsSync";
 import { supabase } from "./lib/supabase";
 
@@ -103,7 +102,6 @@ function App() {
               <RehabProvider>
                 <UserSettingsSync />
                 <Router />
-                <SettingsPanel />
               </RehabProvider>
             </AuthProvider>
           </TextToSpeechProvider>

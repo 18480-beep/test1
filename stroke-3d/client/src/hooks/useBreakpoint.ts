@@ -19,11 +19,14 @@ export interface Breakpoint {
   sidebarWidth: number;
   /** window.innerWidth */
   width: number;
+  /** visual viewport height, falls back to window.innerHeight */
+  height: number;
 }
 
 export function useBreakpoint(): Breakpoint {
   const getValues = (): Breakpoint => {
     const w = window.innerWidth;
+    const h = Math.round(window.visualViewport?.height ?? window.innerHeight);
     const isMobile  = w < 640;
     const isTablet  = w >= 640 && w < 1024;
     const isDesktop = w >= 1024;
@@ -31,7 +34,7 @@ export function useBreakpoint(): Breakpoint {
     // On tablet it collapses to icon-only (64px)
     // On desktop it stays full (240px) — ต้องตรงกับ CommandSidebar.tsx W = 240
     const sidebarWidth = isMobile ? 0 : isTablet ? 64 : 240;
-    return { isMobile, isTablet, isDesktop, sidebarWidth, width: w };
+    return { isMobile, isTablet, isDesktop, sidebarWidth, width: w, height: h };
   };
 
   const [bp, setBp] = useState<Breakpoint>(getValues);
@@ -39,7 +42,11 @@ export function useBreakpoint(): Breakpoint {
   useEffect(() => {
     const handler = () => setBp(getValues());
     window.addEventListener("resize", handler);
-    return () => window.removeEventListener("resize", handler);
+    window.visualViewport?.addEventListener("resize", handler);
+    return () => {
+      window.removeEventListener("resize", handler);
+      window.visualViewport?.removeEventListener("resize", handler);
+    };
   }, []);
 
   return bp;

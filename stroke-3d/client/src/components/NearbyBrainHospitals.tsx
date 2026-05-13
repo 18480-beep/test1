@@ -161,7 +161,7 @@ function injectCSS() {
   document.head.appendChild(style);
 }
 
-export default function NearbyBrainHospitals() {
+export default function NearbyBrainHospitals({ compact = false }: { compact?: boolean }) {
   const [phase, setPhase] = useState<"idle" | "gps" | "fetch" | "map" | "done" | "error">("idle");
   const { textScale } = useTheme();
   const [userLat, setUserLat] = useState<number | null>(null);
@@ -174,7 +174,7 @@ export default function NearbyBrainHospitals() {
   const mapRef = useRef<any>(null);
   const markers = useRef<{ id: number; m: any }[]>([]);
   const userMarkerRef = useRef<any>(null);
-  const mapMinHeight = 310;
+  const mapMinHeight = compact ? 230 : 310;
 
   // โหลด Leaflet + CSS ล่วงหน้าทันทีที่ mount
   useEffect(() => {
@@ -337,11 +337,11 @@ export default function NearbyBrainHospitals() {
   const loading = phase !== "done" && phase !== "error";
 
   return (
-    <div style={{ background: "linear-gradient(160deg,rgba(4,12,26,0.96),rgba(2,8,18,0.98))", border: "1px solid rgba(32,200,220,0.15)", borderRadius: 16, overflow: "hidden", display: "flex", flexDirection: "column", flex: "1 1 auto", minHeight: 430 }}>
-      <div style={{ padding: "18px 20px 16px", borderBottom: "1px solid rgba(32,200,220,0.09)", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
+    <div style={{ background: "linear-gradient(160deg,rgba(4,12,26,0.96),rgba(2,8,18,0.98))", border: "1px solid rgba(32,200,220,0.15)", borderRadius: 16, overflow: "hidden", display: "flex", flexDirection: "column", flex: "1 1 auto", minHeight: compact ? 340 : 430 }}>
+      <div style={{ padding: compact ? "12px 14px 10px" : "18px 20px 16px", borderBottom: "1px solid rgba(32,200,220,0.09)", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
         <div>
-          <div style={{ fontSize: 15, fontFamily: "monospace", color: "#4d9fff", letterSpacing: ".12em", textTransform: "uppercase", fontWeight: 700 }}>Patient Locator</div>
-          <div style={{ fontSize: 14, fontFamily: "monospace", color: "rgba(77,159,255,0.42)", marginTop: 4, lineHeight: 1.45 }}>
+          <div style={{ fontSize: compact ? 12 : 15, fontFamily: "monospace", color: "#4d9fff", letterSpacing: ".12em", textTransform: "uppercase", fontWeight: 700 }}>Patient Locator</div>
+          <div style={{ fontSize: compact ? 11 : 14, fontFamily: "monospace", color: "rgba(77,159,255,0.42)", marginTop: 4, lineHeight: 1.45 }}>
             {phase === "done" && hospitals.length > 0
               ? `พบ ${hospitals.length} แห่ง ภายใน 10 กม.`
               : phase === "gps" ? "กำลังระบุตำแหน่ง GPS..."

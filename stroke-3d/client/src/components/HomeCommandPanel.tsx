@@ -41,25 +41,19 @@ const bdr = "1px solid rgba(104,246,255,0.14)";
 // Quick layout controls:
 // X: positive = right, negative = left
 // Y: positive = down, negative = up
-const STATS_OFFSET_X = -200;
-const STATS_OFFSET_Y = 0;
 const STATS_GAP = 8;
-const STATS_CARD_MIN_HEIGHT = 100;
-const STATS_CARD_PADDING = "0px 10px";
-const MAIN_BLOCK_OFFSET_X = -70;
-const MAIN_BLOCK_OFFSET_Y = 0;
-const MAIN_BLOCK_SCALE = 0.99;
-const MAIN_LEFT_COLUMN_WIDTH = 390;
-const MAIN_RIGHT_COLUMN_WIDTH = 340;
+const STATS_CARD_MIN_HEIGHT = 74;
 const MAIN_BLOCK_MIN_HEIGHT = 430;
-const DIAGNOSTICS_OFFSET_X = -100;
-const DIAGNOSTICS_OFFSET_Y = 0;
+const COMMAND_DESKTOP_CANVAS_WIDTH = 2600;
+const COMMAND_DESKTOP_MIN_SCALE = 0.68;
+const COMMAND_HERO_SHIFT_X = -150;
+const COMMAND_HERO_SHIFT_Y = -20;
 
 export default function HomeCommandPanel() {
   const { user } = useAuth();
   const [sessions, setSessions] = useState<SessionData[]>([]);
   const [speechProgress, setSpeechProgress] = useState<SpeechProgressData[]>([]);
-  const { isMobile, isTablet, sidebarWidth, width } = useBreakpoint();
+  const { isMobile, isTablet, width, height } = useBreakpoint();
 
   const loadGameSessions = useCallback(() => {
     if (!user) {
@@ -138,15 +132,34 @@ export default function HomeCommandPanel() {
     { label: "Last Sync", value: latestSync, sub: sessions.length ? "Latest" : "No Data", Icon: Clock3, color: cyan },
   ];
 
+  const isDenseViewport = !isMobile && (width < 1500 || height < 820);
+  const isShortViewport = !isMobile && height < 760;
+  const isCompactDesktop = width < 1380 || isShortViewport;
+  const isRoomyDesktop = !isMobile && !isTablet && !isCompactDesktop;
   const mainCols = isMobile
     ? "1fr"
     : isTablet
       ? "1fr"
-      : `${MAIN_LEFT_COLUMN_WIDTH}px minmax(0, 1fr) ${MAIN_RIGHT_COLUMN_WIDTH}px`;
-  const panelGap = isMobile ? 14 : 18;
-  const sidePad = isMobile ? 14 : isTablet ? 18 : 22;
-  const topPad = isMobile ? 76 : 76;
-  const leftPad = isMobile ? sidePad : sidebarWidth + sidePad;
+      : isCompactDesktop
+        ? "minmax(250px, 310px) minmax(0, 1fr)"
+        : "minmax(280px, 310px) minmax(0, 1fr) minmax(220px, 260px)";
+  const mainMinHeight = isDenseViewport ? 340 : MAIN_BLOCK_MIN_HEIGHT;
+  const panelGap = isMobile ? 14 : isDenseViewport ? 12 : 18;
+  const sidePad = isMobile ? 14 : isTablet ? 18 : isDenseViewport ? 22 : 34;
+  const topPad = isMobile ? 76 : isDenseViewport ? 72 : 86;
+  const contentInset = isMobile ? 0 : isTablet ? 0 : isDenseViewport ? `clamp(72px, 5.4vw, 110px)` : `clamp(118px, 8vw, 152px)`;
+  const headerMaxWidth = isMobile
+    ? "none"
+    : isDenseViewport
+      ? "min(760px, calc(100% - clamp(72px, 5.4vw, 110px)))"
+      : "min(860px, calc(100% - clamp(118px, 8vw, 152px)))";
+  const statsMinWidth = isDenseViewport ? 178 : 210;
+  const commandScale = isMobile || isTablet
+    ? 1
+    : Math.min(1, Math.max(COMMAND_DESKTOP_MIN_SCALE, width / COMMAND_DESKTOP_CANVAS_WIDTH));
+  const heroTransform = COMMAND_HERO_SHIFT_X || COMMAND_HERO_SHIFT_Y
+    ? `translate(${COMMAND_HERO_SHIFT_X}px, ${COMMAND_HERO_SHIFT_Y}px)`
+    : undefined;
 
   return (
     <motion.div
@@ -161,7 +174,7 @@ export default function HomeCommandPanel() {
         pointerEvents: "auto",
         overflowY: "auto",
         overflowX: "hidden",
-        padding: `${topPad}px ${sidePad}px 40px ${leftPad}px`,
+        padding: `${topPad}px ${sidePad}px 40px`,
         background:
           "radial-gradient(ellipse 70% 40% at 60% 0%,rgba(80,140,200,0.08),transparent 55%)," +
           "linear-gradient(160deg,rgba(3,9,20,0.58),rgba(5,14,28,0.46) 55%,rgba(2,8,18,0.64))",
@@ -206,28 +219,35 @@ export default function HomeCommandPanel() {
         }
       `}</style>
 
-      <div style={{ width: "100%", display: "grid", gap: panelGap }}>
+      <div
+        style={{
+          width: commandScale === 1 ? "100%" : `${100 / commandScale}%`,
+          display: "grid",
+          gap: panelGap,
+          transform: commandScale === 1 ? undefined : `scale(${commandScale})`,
+          transformOrigin: "top left",
+        }}
+      >
         <header
           style={{
             display: "grid",
             gridTemplateColumns: isMobile ? "1fr" : "1fr auto",
             gap: panelGap,
             alignItems: "start",
+            marginLeft: contentInset,
+            maxWidth: headerMaxWidth,
+            transform: heroTransform,
           }}
         >
-           <div
-    style={{
-      transform: "translate(-200px, 0px)",
-    }}
-  >
+          <div>
             <div
               style={{
                 color: cyan,
                 fontFamily: "monospace",
-                fontSize: 15,
+                fontSize: isDenseViewport ? 12 : 15,
                 letterSpacing: ".1em",
                 textTransform: "uppercase",
-                marginBottom: 8,
+                marginBottom: isDenseViewport ? 6 : 8,
               }}
             >
               Stroke Rehab
@@ -235,7 +255,7 @@ export default function HomeCommandPanel() {
             <h1
               style={{
                 margin: 0,
-                fontSize: isMobile ? 38 : 58,
+                fontSize: isDenseViewport ? "clamp(30px, 4.8vw, 46px)" : "clamp(34px, 7vw, 58px)",
                 lineHeight: 1,
                 fontWeight: 200,
                 color: "#f0f8ff",
@@ -247,10 +267,10 @@ export default function HomeCommandPanel() {
             </h1>
             <p
               style={{
-                margin: "12px 0 0 ",
+                margin: isDenseViewport ? "8px 0 0 " : "12px 0 0 ",
                 color: "rgba(210,235,255,.76)",
-                fontSize: 17,
-                lineHeight: 1.65,
+                fontSize: isDenseViewport ? "clamp(12px, 1.5vw, 14px)" : "clamp(14px, 2vw, 17px)",
+                lineHeight: isDenseViewport ? 1.45 : 1.65,
                 maxWidth: width > 1600 ? 820 : 720,
               }}
             >
@@ -262,10 +282,10 @@ export default function HomeCommandPanel() {
                 alignItems: "center",
                 flexWrap: "wrap",
                 gap: 10,
-                marginTop: 16,
+                marginTop: isDenseViewport ? 10 : 16,
                 color: "rgba(210,235,255,.65)",
                 fontFamily: "monospace",
-                fontSize: 17,
+                fontSize: isDenseViewport ? "clamp(11px, 1.4vw, 13px)" : "clamp(13px, 2vw, 17px)",
                 lineHeight: 1.5,
               }}
             >
@@ -290,9 +310,8 @@ export default function HomeCommandPanel() {
         <section
           style={{
             display: "grid",
-            gridTemplateColumns: isMobile ? "1fr" : isTablet ? "repeat(2,1fr)" : "repeat(6, minmax(0,1fr))",
+            gridTemplateColumns: `repeat(auto-fit, minmax(min(100%, ${statsMinWidth}px), 1fr))`,
             gap: STATS_GAP,
-            transform: `translate(${STATS_OFFSET_X}px, ${STATS_OFFSET_Y}px)`,
           }}
         >
           {statCards.map(({ label, value, sub, Icon, color, variant }) => {
@@ -305,12 +324,12 @@ export default function HomeCommandPanel() {
               className="hglass"
               style={{
                 borderRadius: 14,
-                padding: STATS_CARD_PADDING,
+                padding: isDenseViewport ? "8px 10px" : "10px 12px",
                 display: "grid",
-                gridTemplateColumns: "48px 1fr",
-                gap: 14,
+                gridTemplateColumns: "40px minmax(0, 1fr)",
+                gap: 12,
                 alignItems: "center",
-                minHeight: STATS_CARD_MIN_HEIGHT,
+                minHeight: isDenseViewport ? 62 : STATS_CARD_MIN_HEIGHT,
                 background: isSpiderstroke
                   ? "linear-gradient(145deg,rgba(48,6,12,0.9),rgba(10,10,24,0.92))"
                     : isSpeech
@@ -338,8 +357,8 @@ export default function HomeCommandPanel() {
             >
               <div
                 style={{
-                  width: 48,
-                  height: 48,
+                  width: 40,
+                  height: 40,
                   borderRadius: 12,
                   display: "grid",
                   placeItems: "center",
@@ -366,7 +385,7 @@ export default function HomeCommandPanel() {
                       : undefined,
                 }}
               >
-                <Icon size={24} color={color} />
+                <Icon size={22} color={color} />
               </div>
               <div>
                 <div
@@ -379,7 +398,7 @@ export default function HomeCommandPanel() {
                           ? "rgba(255,205,210,.92)"
                         : "rgba(210,240,255,.55)",
                     fontFamily: "monospace",
-                    fontSize: 14,
+                    fontSize: 11,
                     letterSpacing: ".06em",
                     textTransform: "uppercase",
                     fontWeight: isSpiderstroke || isSpeech || isAtmosphere ? 800 : undefined,
@@ -390,7 +409,7 @@ export default function HomeCommandPanel() {
                 <div
                   style={{
                     color,
-                    fontSize: 30,
+                    fontSize: "clamp(20px, 2vw, 28px)",
                     fontWeight: 900,
                     lineHeight: 1.1,
                     marginTop: 6,
@@ -414,7 +433,7 @@ export default function HomeCommandPanel() {
                         : isAtmosphere
                           ? "rgba(255,226,229,.94)"
                         : "rgba(130,255,215,.8)",
-                    fontSize: 17,
+                    fontSize: "clamp(12px, 1.4vw, 16px)",
                     fontWeight: isSpiderstroke || isSpeech || isAtmosphere ? 700 : undefined,
                     marginTop: 6,
                     overflow: "hidden",
@@ -435,16 +454,16 @@ export default function HomeCommandPanel() {
             display: "grid",
             gridTemplateColumns: mainCols,
             gap: panelGap,
-            minHeight: isMobile ? "auto" : MAIN_BLOCK_MIN_HEIGHT,
+            minHeight: isMobile ? "auto" : mainMinHeight,
             alignItems: "stretch",
-            transform: `translate(${MAIN_BLOCK_OFFSET_X}px, ${MAIN_BLOCK_OFFSET_Y}px) scale(${MAIN_BLOCK_SCALE})`,
-            transformOrigin: "top left",
+            marginLeft: contentInset,
+            minWidth: 0,
           }}
         >
-          <MissionTrajectory distance="3.6 กม." accuracy={Math.max(92, avgAcc)} />
-          <NearbyBrainHospitals />
+          <MissionTrajectory distance="3.6 กม." accuracy={Math.max(92, avgAcc)} compact={isDenseViewport} />
+          <NearbyBrainHospitals compact={isDenseViewport} />
 
-          <aside style={{ display: "flex", minHeight: 0 }}>
+          {isRoomyDesktop && <aside style={{ display: "flex", minHeight: 0 }}>
             <div
               className="hglass"
               style={{
@@ -455,7 +474,7 @@ export default function HomeCommandPanel() {
               }}
             />
 
-          </aside>
+          </aside>}
         </section>
 
         <section
@@ -463,13 +482,13 @@ export default function HomeCommandPanel() {
           style={{
             borderRadius: 14,
             padding: "20px 24px",
-            transform: `translate(${DIAGNOSTICS_OFFSET_X}px, ${DIAGNOSTICS_OFFSET_Y}px)`,
+            marginLeft: contentInset,
           }}
         >
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: isMobile ? "1fr" : "1.25fr 1fr 1fr 1fr",
+              gridTemplateColumns: isMobile ? "1fr" : isDenseViewport ? "repeat(2, minmax(0, 1fr))" : "1.25fr 1fr 1fr 1fr",
               gap: panelGap,
               alignItems: "center",
             }}
@@ -479,7 +498,7 @@ export default function HomeCommandPanel() {
                 style={{
                   margin: "0 0 6px",
                   color: cyan,
-                  fontSize: 18,
+                  fontSize: isDenseViewport ? 15 : 18,
                   textTransform: "uppercase",
                   fontFamily: "monospace",
                   letterSpacing: ".06em",
@@ -487,7 +506,7 @@ export default function HomeCommandPanel() {
               >
                 Sector 7 Diagnostics
               </h2>
-              <p style={{ margin: 0, color: "rgba(210,240,255,.55)", fontSize: 17, lineHeight: 1.65 }}>
+              <p style={{ margin: 0, color: "rgba(210,240,255,.55)", fontSize: isDenseViewport ? 13 : 17, lineHeight: isDenseViewport ? 1.45 : 1.65 }}>
                 Recovery systems reporting peak filtration cycles.
                 <br />
                 Neural pathways show {avgAcc}% bio-performance increase.
@@ -505,7 +524,7 @@ export default function HomeCommandPanel() {
                   display: "flex",
                   alignItems: "center",
                   gap: 14,
-                  padding: "14px 16px",
+                  padding: isDenseViewport ? "10px 12px" : "14px 16px",
                   background: "rgba(255,255,255,.03)",
                   border: "1px solid rgba(255,255,255,.06)",
                   borderRadius: 12,
@@ -529,7 +548,7 @@ export default function HomeCommandPanel() {
                 <div>
                   <div
                     style={{
-                      fontSize: 14,
+                      fontSize: isDenseViewport ? 11 : 14,
                       color: "rgba(210,240,255,.5)",
                       fontFamily: "monospace",
                       textTransform: "uppercase",
@@ -537,10 +556,10 @@ export default function HomeCommandPanel() {
                   >
                     {label}
                   </div>
-                  <div style={{ fontSize: 24, fontWeight: 800, color: color ?? cyan, lineHeight: 1.15 }}>
+                  <div style={{ fontSize: isDenseViewport ? 19 : 24, fontWeight: 800, color: color ?? cyan, lineHeight: 1.15 }}>
                     {value}
                   </div>
-                  <div style={{ fontSize: 17, color: "rgba(210,240,255,.5)" }}>{sub}</div>
+                  <div style={{ fontSize: isDenseViewport ? 12 : 17, color: "rgba(210,240,255,.5)" }}>{sub}</div>
                 </div>
               </div>
             ))}
@@ -551,16 +570,16 @@ export default function HomeCommandPanel() {
   );
 }
 
-function MissionTrajectory({ distance, accuracy }: { distance: string; accuracy: number }) {
+function MissionTrajectory({ distance, accuracy, compact = false }: { distance: string; accuracy: number; compact?: boolean }) {
   return (
     <div
       className="hglass"
       style={{
         borderRadius: 14,
-        padding: "20px 20px",
+        padding: compact ? "14px 14px" : "20px 20px",
         display: "flex",
         flexDirection: "column",
-        minHeight: MAIN_BLOCK_MIN_HEIGHT,
+        minHeight: compact ? 340 : MAIN_BLOCK_MIN_HEIGHT,
       }}
     >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
@@ -569,7 +588,7 @@ function MissionTrajectory({ distance, accuracy }: { distance: string; accuracy:
             style={{
               margin: 0,
               color: cyan,
-              fontSize: 18,
+              fontSize: compact ? 15 : 18,
               textTransform: "uppercase",
               fontFamily: "monospace",
               letterSpacing: ".06em",
@@ -577,7 +596,7 @@ function MissionTrajectory({ distance, accuracy }: { distance: string; accuracy:
           >
             Mission Trajectory
           </h2>
-          <p style={{ margin: "8px 0 0", color: "rgba(210,240,255,.6)", fontSize: 17, lineHeight: 1.5 }}>
+          <p style={{ margin: "8px 0 0", color: "rgba(210,240,255,.6)", fontSize: compact ? 13 : 17, lineHeight: 1.5 }}>
             Real-time vector analysis
           </p>
         </div>
@@ -587,8 +606,8 @@ function MissionTrajectory({ distance, accuracy }: { distance: string; accuracy:
             background: "rgba(33,255,208,.1)",
             border: "1px solid rgba(33,255,208,.25)",
             borderRadius: 8,
-            padding: "6px 12px",
-            fontSize: 15,
+            padding: compact ? "5px 9px" : "6px 12px",
+            fontSize: compact ? 12 : 15,
             fontFamily: "monospace",
           }}
         >
@@ -596,7 +615,7 @@ function MissionTrajectory({ distance, accuracy }: { distance: string; accuracy:
         </span>
       </div>
 
-      <svg viewBox="0 0 300 200" style={{ width: "100%", flex: "0 0 auto", height: 220, marginTop: 8 }}>
+      <svg viewBox="0 0 300 200" style={{ width: "100%", flex: "0 0 auto", height: compact ? 154 : 220, marginTop: compact ? 2 : 8 }}>
         <defs>
           <linearGradient id="traj" x1="0" x2="1">
             <stop offset="0" stopColor={mint} />
@@ -627,8 +646,8 @@ function MissionTrajectory({ distance, accuracy }: { distance: string; accuracy:
           display: "grid",
           gridTemplateColumns: "repeat(3,1fr)",
           gap: 12,
-          paddingTop: 18,
-          marginTop: 10,
+          paddingTop: compact ? 12 : 18,
+          marginTop: compact ? 6 : 10,
         }}
       >
         {[
@@ -637,22 +656,22 @@ function MissionTrajectory({ distance, accuracy }: { distance: string; accuracy:
           ["Status", "Tracking"],
         ].map(([label, value]) => (
           <div key={label}>
-            <div style={{ color: "rgba(210,240,255,.48)", fontSize: 15, marginBottom: 5 }}>{label}</div>
-            <strong style={{ color: value === "Tracking" ? mint : "#fff", fontSize: 22 }}>{value}</strong>
+            <div style={{ color: "rgba(210,240,255,.48)", fontSize: compact ? 12 : 15, marginBottom: 5 }}>{label}</div>
+            <strong style={{ color: value === "Tracking" ? mint : "#fff", fontSize: compact ? 17 : 22 }}>{value}</strong>
           </div>
         ))}
       </div>
 
       <div
         style={{
-          marginTop: 16,
+          marginTop: compact ? 10 : 16,
           borderRadius: 10,
           background: "rgba(255,255,255,.03)",
           border: "1px solid rgba(255,255,255,.06)",
-          padding: "14px 15px",
+          padding: compact ? "10px 12px" : "14px 15px",
           color: "rgba(210,240,255,.55)",
-          fontSize: 17,
-          lineHeight: 1.65,
+          fontSize: compact ? 12 : 17,
+          lineHeight: compact ? 1.45 : 1.65,
         }}
       >
         Route locks onto the selected hospital. If none is selected, nearest facility is used automatically.

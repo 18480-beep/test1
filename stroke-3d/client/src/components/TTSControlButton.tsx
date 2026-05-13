@@ -92,34 +92,94 @@ export default function TTSControlButton() {
     <>
       <style>{`
         .tts-button {
-          position: relative; width: 52px; height: 52px; border-radius: 12px;
+          position: relative;
+          width: clamp(40px, 4.4vw, 52px);
+          height: clamp(40px, 4.4vw, 52px);
+          min-width: 40px;
+          min-height: 40px;
+          border-radius: 12px;
           border: 1.5px solid rgba(200,150,50,0.4);
           background: linear-gradient(135deg,rgba(10,10,15,0.85),rgba(20,20,35,0.9));
           color: #C89632; cursor: pointer; transition: all 0.3s ease;
           box-shadow: 0 4px 16px rgba(0,0,0,0.4); backdrop-filter: blur(8px);
-          display: flex; align-items: center; justify-content: center; font-size: 22px;
+          -webkit-backdrop-filter: blur(8px);
+          display: flex; align-items: center; justify-content: center;
+          font-size: clamp(18px, 2.2vw, 22px);
+          padding: 0;
+          flex: 0 0 auto;
+          touch-action: manipulation;
         }
         .tts-button:hover { transform: translateY(-3px); border-color: #C89632; box-shadow: 0 8px 28px rgba(200,150,50,0.3); background: linear-gradient(135deg,rgba(200,150,50,0.15),rgba(220,180,80,0.1)); }
         .tts-button.speaking { animation: tts-pulse 1s ease-in-out infinite; border-color: #C89632; background: linear-gradient(135deg,rgba(200,150,50,0.2),rgba(220,180,80,0.15)); }
         @keyframes tts-pulse { 0%,100%{box-shadow:0 4px 16px rgba(200,150,50,0.4);}50%{box-shadow:0 8px 28px rgba(200,150,50,0.6);} }
-        .tts-menu { position: absolute; bottom: 60px; right: 0; background: linear-gradient(180deg,rgba(10,10,15,0.97),rgba(15,15,25,0.97)); border: 1px solid rgba(200,150,50,0.3); border-radius: 12px; min-width: 210px; box-shadow: 0 8px 32px rgba(0,0,0,0.6); backdrop-filter: blur(8px); z-index: 100; animation: menu-slide-in 0.2s ease; overflow: hidden; }
+        .tts-control-wrap {
+          position: relative;
+          display: flex;
+          align-items: flex-start;
+          gap: 8px;
+          max-width: 100%;
+        }
+        .tts-menu {
+          position: absolute;
+          bottom: calc(100% + 8px);
+          left: 0;
+          width: min(248px, calc(100vw - var(--control-panel-left, 16px) - max(env(safe-area-inset-right, 0px), 10px)));
+          max-height: min(420px, calc(100vh - 140px));
+          background: linear-gradient(180deg,rgba(10,10,15,0.97),rgba(15,15,25,0.97));
+          border: 1px solid rgba(200,150,50,0.3);
+          border-radius: 12px;
+          box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+          backdrop-filter: blur(8px);
+          -webkit-backdrop-filter: blur(8px);
+          z-index: 100;
+          animation: menu-slide-in 0.2s ease;
+          overflow: auto;
+          overscroll-behavior: contain;
+        }
         @keyframes menu-slide-in { from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);} }
-        .tts-menu-item { padding: 13px 16px; border: none; background: none; color: rgba(255,255,255,0.8); cursor: pointer; width: 100%; text-align: left; font-size: 14px; transition: all 0.2s; border-bottom: 1px solid rgba(200,150,50,0.1); font-family:'DM Sans',sans-serif; display:flex; align-items:center; gap:10px; }
+        .tts-menu-item { padding: 13px 16px; border: none; background: none; color: rgba(255,255,255,0.8); cursor: pointer; width: 100%; text-align: left; font-size: 14px; line-height: 1.35; transition: all 0.2s; border-bottom: 1px solid rgba(200,150,50,0.1); font-family:'DM Sans',sans-serif; display:flex; align-items:center; gap:10px; }
         .tts-menu-item:last-child { border-bottom: none; }
         .tts-menu-item:hover { background: rgba(200,150,50,0.15); color: #C89632; }
         .tts-menu-item.active { background: rgba(200,150,50,0.2); color: #C89632; font-weight: 600; }
         .tts-menu-item.primary { background: rgba(200,150,50,0.12); color: #E8B84B; font-weight: 600; font-size: 15px; }
         .tts-menu-item.primary:hover { background: rgba(200,150,50,0.25); }
         .tts-menu-divider { height: 1px; background: rgba(200,150,50,0.2); margin: 2px 0; }
-        .tts-menu-label { padding: 8px 14px 4px; font-size: 11px; color: rgba(200,150,50,0.6); text-transform: uppercase; letter-spacing: 0.2em; font-weight: 600; }
-        .tts-stop-bar { display:flex; align-items:center; gap:8px; padding:6px 10px; background:rgba(200,150,50,0.1); border:1px solid rgba(200,150,50,0.3); border-radius:8px; font-size:12px; color:#C89632; cursor:pointer; transition:background 0.2s; white-space:nowrap; }
+        .tts-menu-label { padding: 8px 14px 4px; font-size: 11px; color: rgba(200,150,50,0.6); text-transform: uppercase; letter-spacing: 0.12em; font-weight: 600; }
+        .tts-stop-bar {
+          position: absolute;
+          left: calc(100% + 8px);
+          top: 50%;
+          transform: translateY(-50%);
+          display:flex; align-items:center; gap:8px;
+          max-width: calc(100vw - var(--control-panel-left, 16px) - clamp(56px, 8vw, 68px) - max(env(safe-area-inset-right, 0px), 10px));
+          padding:6px 10px; background:rgba(200,150,50,0.1); border:1px solid rgba(200,150,50,0.3); border-radius:8px; font-size:12px; color:#C89632; cursor:pointer; transition:background 0.2s; white-space:nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
         .tts-stop-bar:hover { background: rgba(200,150,50,0.2); }
 
         /* ── Thai voice warning banner ── */
         .tts-warn { padding:10px 14px; background:rgba(255,180,0,0.08); border-top:1px solid rgba(255,180,0,0.15); font-size:11px; color:rgba(255,200,80,0.7); line-height:1.5; }
+
+        @media (max-width: 480px) {
+          .tts-menu {
+            width: min(286px, calc(100vw - var(--control-panel-left, 10px) - max(env(safe-area-inset-right, 0px), 10px)));
+            max-height: min(360px, calc(100vh - 124px));
+          }
+          .tts-menu-item {
+            padding: 12px 13px;
+            font-size: 13px;
+          }
+          .tts-menu-item.primary {
+            font-size: 14px;
+          }
+          .tts-warn {
+            font-size: 10.5px;
+          }
+        }
       `}</style>
 
-      <div style={{ position:"relative", display:"flex", alignItems:"center", gap:8 }}>
+      <div className="tts-control-wrap">
         {isSpeaking && (
           <button className="tts-stop-bar" onClick={stop} title="หยุดอ่าน">
             🔊 กำลังอ่าน...&nbsp;<span style={{fontSize:16}}>⏹</span>

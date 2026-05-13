@@ -9,6 +9,16 @@ import { SCENES, type SceneData } from "@/lib/sceneData";
 import { useTheme } from "@/contexts/ThemeContext";
 import SelectableText from "@/components/SelectableText";
 
+// Scene text size controls for apps/browsers that render 100% zoom too large.
+// Set these below 1 (for example 0.82) to shrink only these text groups.
+const SCENE_DEFAULT_META_SCALE = 0.8;
+const SCENE_DEFAULT_SUBTITLE_SCALE = 1;
+const SCENE_DEFAULT_TITLE_SCALE = 1;
+const SCENE_DEFAULT_DESCRIPTION_SCALE = 1;
+const SCENE_DEFAULT_FACT_SCALE = 1;
+const SCENE_TEXTBOX_TITLE_SCALE = 1;
+const SCENE_TEXTBOX_BODY_SCALE = 1;
+
 interface SceneContentProps {
   activeScene: number;
   scrollProgress: number;
@@ -127,7 +137,7 @@ function TextBoxesLayout({ scene }: { scene: SceneData }) {
             {box.title && (
               <div style={{
                 color: scene.accentColor,
-                fontSize: isSpeechScene && i === 0 ? (box.fontSize ?? 13) : (box.fontSize ?? 13) + 2,
+                fontSize: (isSpeechScene && i === 0 ? (box.fontSize ?? 13) : (box.fontSize ?? 13) + 2) * SCENE_TEXTBOX_TITLE_SCALE,
                 fontWeight: isSpeechScene ? 800 : 700,
                 fontFamily: "var(--font-mono, monospace)",
                 marginBottom: isSpeechScene ? 10 : 6,
@@ -140,7 +150,7 @@ function TextBoxesLayout({ scene }: { scene: SceneData }) {
             )}
             <div style={{
               color: "rgba(195,215,235,0.85)",
-              fontSize: isSpeechScene && i === 0 ? 20 : box.fontSize ?? 13,
+              fontSize: (isSpeechScene && i === 0 ? 20 : box.fontSize ?? 13) * SCENE_TEXTBOX_BODY_SCALE,
               lineHeight: isSpeechScene ? 1.58 : 1.7,
               whiteSpace: "pre-line",
               fontFamily: "var(--font-body, system-ui, sans-serif)",
@@ -172,25 +182,25 @@ function DefaultLayout({ scene }: { scene: SceneData }) {
       >
         <div className="flex items-center gap-3 mb-4">
           <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: scene.accentColor }} />
-          <span className="tracking-[0.3em] uppercase" style={{ fontFamily: "var(--font-mono)", color: scene.accentColor, fontSize: "30px" }}>
+          <span className="tracking-[0.3em] uppercase" style={{ fontFamily: "var(--font-mono)", color: scene.accentColor, fontSize: `${30 * SCENE_DEFAULT_META_SCALE}px` }}>
             <SelectableText>Scene {scene.id + 1} / {SCENES.length}</SelectableText>
           </span>
         </div>
 
         <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-          style={{ fontFamily: "var(--font-mono)", color: scene.accentColor, opacity: 0.8, fontSize: "30px", marginBottom: "0.5rem" }}>
+          style={{ fontFamily: "var(--font-mono)", color: scene.accentColor, opacity: 0.8, fontSize: `${30 * SCENE_DEFAULT_SUBTITLE_SCALE}px`, marginBottom: "0.5rem" }}>
           <SelectableText>{scene.subtitle}</SelectableText>
         </motion.p>
 
         <motion.h2 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
           className="scene-title font-bold mb-4 leading-tight"
-          style={{ fontFamily: "var(--font-display)", color: theme === "light" ? "#1A202C" : "#F0F0F0", textShadow: `0 0 30px ${scene.accentColor}33`, fontSize: "clamp(2rem, 4.5vw, 3.5rem)" }}>
+          style={{ fontFamily: "var(--font-display)", color: theme === "light" ? "#1A202C" : "#F0F0F0", textShadow: `0 0 30px ${scene.accentColor}33`, fontSize: `clamp(${2 * SCENE_DEFAULT_TITLE_SCALE}rem, ${4.5 * SCENE_DEFAULT_TITLE_SCALE}vw, ${3.5 * SCENE_DEFAULT_TITLE_SCALE}rem)` }}>
           <SelectableText>{scene.title}</SelectableText>
         </motion.h2>
 
         <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
           className="scene-description leading-relaxed mb-6"
-          style={{ fontFamily: "var(--font-body)", color: theme === "light" ? "#4A5568" : "rgba(200, 210, 220, 0.8)", fontSize: "40px" }}>
+          style={{ fontFamily: "var(--font-body)", color: theme === "light" ? "#4A5568" : "rgba(200, 210, 220, 0.8)", fontSize: `${40 * SCENE_DEFAULT_DESCRIPTION_SCALE}px` }}>
           <SelectableText>{scene.description}</SelectableText>
         </motion.p>
 
@@ -199,7 +209,7 @@ function DefaultLayout({ scene }: { scene: SceneData }) {
             {scene.facts.map((fact, i) => (
               <motion.div key={i} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.8 + i * 0.1 }} className="flex items-start gap-2">
                 <span className="mt-1.5 w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: scene.accentColor, opacity: 0.6 }} />
-                <span className="scene-fact" style={{ fontFamily: "var(--font-mono)", color: theme === "light" ? "#718096" : "rgba(180, 190, 200, 0.7)", fontSize: "20px" }}>
+                <span className="scene-fact" style={{ fontFamily: "var(--font-mono)", color: theme === "light" ? "#718096" : "rgba(180, 190, 200, 0.7)", fontSize: `${20 * SCENE_DEFAULT_FACT_SCALE}px` }}>
                   <SelectableText>{fact}</SelectableText>
                 </span>
               </motion.div>

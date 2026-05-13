@@ -1,35 +1,28 @@
 import { useState } from "react";
-import { useTheme } from "@/contexts/ThemeContext";
+import type { CSSProperties } from "react";
 import TTSControlButton from "@/components/TTSControlButton";
 import { useBreakpoint } from "@/hooks/useBreakpoint";
 
 export default function AccessibleControlPanel() {
-  const themeContext = useTheme();
-  const { theme = "dark" } = themeContext;
-  const toggleTheme = themeContext?.toggleTheme;
   const [audioEnabled, setAudioEnabled] = useState(true);
-  const { sidebarWidth } = useBreakpoint();
-  const leftOffset = sidebarWidth - 200;
-
-  const handleThemeToggle = () => {
-    console.log("Theme toggle clicked, current theme:", theme);
-    if (toggleTheme) {
-      toggleTheme();
-    }
-  };
+  const { isMobile, sidebarWidth } = useBreakpoint();
+  const leftOffset = isMobile ? "max(env(safe-area-inset-left, 0px), 10px)" : `${Math.max(14, sidebarWidth + 14)}px`;
 
   return (
     <>
       <style>{`
         .control-panel-container {
           position: fixed;
-          bottom: 72px;
-          left: 16px;
+          bottom: calc(env(safe-area-inset-bottom, 0px) + clamp(56px, 8vh, 72px));
+          left: var(--control-panel-left, 16px);
           z-index: 50;
           display: flex;
           flex-direction: column;
-          gap: 8px;
+          align-items: flex-start;
+          gap: clamp(6px, 1.4vw, 8px);
           font-family: 'DM Sans', sans-serif;
+          transition: left 0.25s cubic-bezier(0.4,0,0.2,1), bottom 0.2s ease;
+          max-width: calc(100vw - var(--control-panel-left, 16px) - max(env(safe-area-inset-right, 0px), 10px));
         }
 
         .control-button {
@@ -37,8 +30,10 @@ export default function AccessibleControlPanel() {
           align-items: center;
           justify-content: center;
           gap: 8px;
-          width: 52px;
-          height: 52px;
+          width: clamp(40px, 4.4vw, 52px);
+          height: clamp(40px, 4.4vw, 52px);
+          min-width: 40px;
+          min-height: 40px;
           border-radius: 12px;
           border: 1.5px solid rgba(79, 142, 247, 0.4);
           background: linear-gradient(135deg, rgba(10, 10, 15, 0.85), rgba(20, 20, 35, 0.9));
@@ -47,6 +42,16 @@ export default function AccessibleControlPanel() {
           transition: all 0.3s ease;
           box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
           backdrop-filter: blur(8px);
+          -webkit-backdrop-filter: blur(8px);
+          padding: 0;
+          flex: 0 0 auto;
+          touch-action: manipulation;
+        }
+
+        .control-button svg {
+          width: clamp(18px, 2.2vw, 22px);
+          height: clamp(18px, 2.2vw, 22px);
+          flex: 0 0 auto;
         }
 
         .control-button:hover {
@@ -84,42 +89,22 @@ export default function AccessibleControlPanel() {
 
         @media (max-width: 768px) {
           .control-panel-container {
-            gap: 6px;
-            bottom: 68px;
-          }
-
-          .control-button {
-            width: 44px;
-            height: 44px;
-            font-size: 18px;
+            bottom: calc(env(safe-area-inset-bottom, 0px) + 62px);
           }
         }
 
         @media (max-width: 480px) {
           .control-panel-container {
-            bottom: 64px;
-            left: 10px;
-          }
-
-          .control-button {
-            width: 40px;
-            height: 40px;
+            bottom: calc(env(safe-area-inset-bottom, 0px) + 58px);
           }
         }
       `}</style>
 
       {/* Control Panel */}
-      <div style={{
-        position: "fixed",
-        bottom: 72,
-        left: leftOffset,
-        zIndex: 50,
-        display: "flex",
-        flexDirection: "column",
-        gap: 8,
-        fontFamily: "'DM Sans', sans-serif",
-        transition: "left 0.25s cubic-bezier(0.4,0,0.2,1)",
-      }}>
+      <div
+        className="control-panel-container"
+        style={{ "--control-panel-left": leftOffset } as CSSProperties}
+      >
         {/* Audio Toggle Button */}
         <button
           className={`control-button ${audioEnabled ? "audio-on" : ""}`}
