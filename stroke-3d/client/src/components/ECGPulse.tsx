@@ -114,8 +114,8 @@ export default function ECGPulse({ activeScene }: ECGPulseProps) {
           y = mid - 5; // T wave
         }
 
-        // Add subtle noise for realism
-        y += (Math.random() - 0.5) * 0.5;
+        // Keep the tiny vibration deterministic so the line does not flicker.
+        y += Math.sin((x + offsetRef.current) * 0.18) * 0.18;
 
         if (x === 0) {
           ctx.moveTo(x, y);
@@ -149,7 +149,7 @@ export default function ECGPulse({ activeScene }: ECGPulseProps) {
     <canvas
       ref={canvasRef}
       className="fixed bottom-0 pointer-events-none"
-      style={{ zIndex: 30, opacity: 0.6, left: 0, right: 0, width: "100vw" }}
+      style={{ zIndex: 8, opacity: 0.1, left: 0, right: 0, width: "100vw" }}
     />
   );
 }

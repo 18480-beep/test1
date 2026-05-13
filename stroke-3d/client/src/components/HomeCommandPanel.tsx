@@ -64,24 +64,37 @@ export default function HomeCommandPanel() {
 
     supabase
       .from("game_sessions")
-      .select("id,played_at,completed,reps,score,accuracy,rank")
+      .select("*")
       .eq("user_id", user.id)
-      .order("played_at", { ascending: false })
+      .order("created_at", { ascending: false })
       .limit(1000)
       .then(({ data }) => {
         if (!data) return;
         setSessions(
           data.map((s: any) => ({
             id: s.id,
-            date: s.played_at?.slice(0, 10) ?? "-",
+            date: s.played_at?.slice(0, 10) ?? s.session_date ?? s.created_at?.slice(0, 10) ?? "-",
             completed: s.completed,
-            reps: s.reps ?? 0,
+            reps: s.reps ?? s.hit_count ?? s.raw_data?.attempted ?? 0,
             score: s.score ?? 0,
             accuracy: s.accuracy ?? 0,
-            rank: s.rank ?? "-",
+            rank: s.rank ?? s.raw_data?.rank ?? "-",
           })),
         );
       });
+  }, [user]);
+
+  const loadSpeechProgress = useCallback(() => {
+    if (!user) {
+      setSpeechProgress([]);
+      return;
+    }
+
+    supabase
+      .from("speech_stage_progress")
+      .select("stage_id,chapter_id,stage_level,stage_name,stars,best_accuracy,last_played_at")
+      .eq("user_id", user.id)
+      .then(({ data }) => setSpeechProgress((data ?? []) as SpeechProgressData[]));
   }, [user]);
 
   useEffect(() => {
@@ -92,18 +105,21 @@ export default function HomeCommandPanel() {
     }
 
     loadGameSessions();
-
-    supabase
-      .from("speech_stage_progress")
-      .select("stage_id,chapter_id,stage_level,stage_name,stars,best_accuracy,last_played_at")
-      .eq("user_id", user.id)
-      .then(({ data }) => setSpeechProgress((data ?? []) as SpeechProgressData[]));
-  }, [loadGameSessions, user]);
+    loadSpeechProgress();
+  }, [loadGameSessions, loadSpeechProgress, user]);
 
   useEffect(() => {
-    window.addEventListener("game-session-saved", loadGameSessions);
-    return () => window.removeEventListener("game-session-saved", loadGameSessions);
-  }, [loadGameSessions]);
+    const reloadDashboardData = () => {
+      loadGameSessions();
+      loadSpeechProgress();
+    };
+    window.addEventListener("game-session-saved", reloadDashboardData);
+    window.addEventListener("speech-progress-saved", reloadDashboardData);
+    return () => {
+      window.removeEventListener("game-session-saved", reloadDashboardData);
+      window.removeEventListener("speech-progress-saved", reloadDashboardData);
+    };
+  }, [loadGameSessions, loadSpeechProgress]);
 
   const total = sessions.length;
   const avgAcc = total > 0 ? Math.round(sessions.reduce((a, s) => a + s.accuracy, 0) / total) : 0;

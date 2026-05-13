@@ -40,7 +40,7 @@ export default function SpeechSceneOverlay({ activeScene }: SpeechSceneOverlayPr
         exit={{ opacity: 0, x: -18 }}
         transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
         className="fixed hidden xl:flex flex-col gap-6 pointer-events-none"
-        style={{ left: "34%", top: "30%", zIndex: 18, width: 340 }}
+        style={{ left: "40%", top: "30%", zIndex: 18, width: 370 }}
       >
         <style>{`
           @keyframes speechFeaturePulse {
@@ -86,7 +86,7 @@ export default function SpeechSceneOverlay({ activeScene }: SpeechSceneOverlayPr
                 style={{
                   color: "#04fac4",
                   fontFamily: "var(--font-display)",
-                  fontSize: 30,
+                  fontSize: 20,
                   fontWeight: 800,
                   lineHeight: 1.15,
                   textShadow: "0 0 16px rgba(153, 0, 229, 0.2)",
